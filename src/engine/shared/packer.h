@@ -30,6 +30,7 @@ class CUnpacker
 	const unsigned char *m_pStart;
 	const unsigned char *m_pCurrent;
 	const unsigned char *m_pEnd;
+protected:
 	int m_Error;
 public:
 	enum
