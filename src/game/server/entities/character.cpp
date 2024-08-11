@@ -4,6 +4,8 @@
 #include <engine/shared/config.h>
 #include <generated/server_data.h>
 
+#include <engine/netconverter.h>
+
 #include <game/server/gamecontext.h>
 
 #include "laser.h"
@@ -572,6 +574,19 @@ void CCharacter::TickDefered()
 	m_Core.Quantize();
 	m_Pos = m_Core.m_Pos;
 	m_TriggeredEvents |= m_Core.m_TriggeredEvents;
+
+	int Events = m_TriggeredEvents;
+	for(int i = 0; i < MAX_CLIENTS; i ++)
+	{
+		if(Server()->ClientProtocol(i) == NETPROTOCOL_SIX)
+		{
+			if(Events&COREEVENTFLAG_GROUND_JUMP && i != m_pPlayer->GetCID()) GS()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, CmaskOne(i));
+
+			if(Events&COREEVENTFLAG_HOOK_ATTACH_PLAYER) GS()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, CmaskOne(i));
+			if(Events&COREEVENTFLAG_HOOK_ATTACH_GROUND && i != m_pPlayer->GetCID()) GS()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, CmaskOne(i));
+			if(Events&COREEVENTFLAG_HOOK_HIT_NOHOOK && i != m_pPlayer->GetCID()) GS()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, CmaskOne(i));
+		}
+	}
 
 	if(m_pPlayer->GetTeam() == TEAM_SPECTATORS)
 	{

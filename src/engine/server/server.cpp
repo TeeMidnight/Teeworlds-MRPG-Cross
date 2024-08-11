@@ -636,7 +636,7 @@ void CServer::DoSnapshot(int WorldID)
 
 					if(NumPackets == 1)
 					{
-						CMsgPacker Msg(NETMSG_SNAPSINGLE, true);
+						CMsgPacker Msg(NETMSG_SNAPSINGLE, true, true);
 						Msg.AddInt(m_CurrentGameTick);
 						Msg.AddInt(m_CurrentGameTick-DeltaTick);
 						Msg.AddInt(Crc);
@@ -646,7 +646,7 @@ void CServer::DoSnapshot(int WorldID)
 					}
 					else
 					{
-						CMsgPacker Msg(NETMSG_SNAP, true);
+						CMsgPacker Msg(NETMSG_SNAP, true, true);
 						Msg.AddInt(m_CurrentGameTick);
 						Msg.AddInt(m_CurrentGameTick-DeltaTick);
 						Msg.AddInt(NumPackets);
@@ -660,7 +660,7 @@ void CServer::DoSnapshot(int WorldID)
 			}
 			else
 			{
-				CMsgPacker Msg(NETMSG_SNAPEMPTY, true);
+				CMsgPacker Msg(NETMSG_SNAPEMPTY, true, true);
 				Msg.AddInt(m_CurrentGameTick);
 				Msg.AddInt(m_CurrentGameTick-DeltaTick);
 				SendMsg(&Msg, MSGFLAG_FLUSH, i, -1, WorldID);
@@ -744,7 +744,7 @@ void CServer::SendMap(int ClientID)
 
 	unsigned Crc = pMap->Crc();
 	SHA256_DIGEST Sha256 = pMap->Sha256();
-	CMsgPacker Msg(NETMSG_MAP_CHANGE, true);
+	CMsgPacker Msg(NETMSG_MAP_CHANGE, true, true);
 	Msg.AddString(pWorldName, 0);
 	Msg.AddInt(Crc);
 	Msg.AddInt(pMap->GetCurrentMapSize());
@@ -774,7 +774,7 @@ void CServer::SendMapData(int ClientID, int Chunk)
 		Last = 1;
 	}
 
-	CMsgPacker Msg(NETMSG_MAP_DATA, true);
+	CMsgPacker Msg(NETMSG_MAP_DATA, true, true);
 	Msg.AddInt(Last);
 	Msg.AddInt(pMap->Crc());
 	Msg.AddInt(Chunk);
@@ -792,13 +792,13 @@ void CServer::SendMapData(int ClientID, int Chunk)
 
 void CServer::SendConnectionReady(int ClientID)
 {
-	CMsgPacker Msg(NETMSG_CON_READY, true);
+	CMsgPacker Msg(NETMSG_CON_READY, true, true);
 	SendMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
 }
 
 void CServer::SendRconLine(int ClientID, const char *pLine)
 {
-	CMsgPacker Msg(NETMSG_RCON_LINE, true);
+	CMsgPacker Msg(NETMSG_RCON_LINE, true, true);
 	Msg.AddString(pLine, 512);
 	SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
@@ -826,7 +826,7 @@ void CServer::SendRconCmdAdd(const IConsole::CCommandInfo *pCommandInfo, int Cli
 	if (ClientID >= MAX_PLAYERS)
 		return;
 
-	CMsgPacker Msg(NETMSG_RCON_CMD_ADD, true);
+	CMsgPacker Msg(NETMSG_RCON_CMD_ADD, true, true);
 	Msg.AddString(pCommandInfo->m_pName, IConsole::TEMPCMD_NAME_LENGTH);
 	Msg.AddString(pCommandInfo->m_pHelp, IConsole::TEMPCMD_HELP_LENGTH);
 	Msg.AddString(pCommandInfo->m_pParams, IConsole::TEMPCMD_PARAMS_LENGTH);
@@ -838,7 +838,7 @@ void CServer::SendRconCmdRem(const IConsole::CCommandInfo *pCommandInfo, int Cli
 	if (ClientID >= MAX_PLAYERS)
 		return;
 
-	CMsgPacker Msg(NETMSG_RCON_CMD_REM, true);
+	CMsgPacker Msg(NETMSG_RCON_CMD_REM, true, true);
 	Msg.AddString(pCommandInfo->m_pName, 256);
 	SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
@@ -904,7 +904,10 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 					return;
 				}
 
-				m_aClients[ClientID].m_Version = Unpacker.GetInt();
+				if(m_aClients[ClientID].m_Protocol == NETPROTOCOL_SIX)
+					m_aClients[ClientID].m_Version = 0x0604;
+				else 
+					m_aClients[ClientID].m_Version = Unpacker.GetInt();
 				m_aClients[ClientID].m_State = CClient::STATE_CONNECTING;
 				GameServer(MAIN_WORLD_ID)->OnResetClientData(ClientID);
 				SendDataMmoInfo(ClientID);
@@ -958,7 +961,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 					else
 						m_aClients[ClientID].m_MapChunk++;
 
-					CMsgPacker Msg(NETMSG_MAP_DATA, true);
+					CMsgPacker Msg(NETMSG_MAP_DATA, true, true);
 					Msg.AddRaw(&CurrentMapData[Offset], ChunkSize);
 					SendMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
 				}
@@ -1061,7 +1064,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			{
 				int TimeLeft = ((TickStartTime(IntendedTick)-Now)*1000) / time_freq();
 
-				CMsgPacker Msg(NETMSG_INPUTTIMING, true);
+				CMsgPacker Msg(NETMSG_INPUTTIMING, true, true);
 				Msg.AddInt(IntendedTick);
 				Msg.AddInt(TimeLeft);
 				SendMsg(&Msg, 0, ClientID, -1, m_aClients[ClientID].m_WorldID);
@@ -1118,6 +1121,9 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		}
 		else if(MsgID == NETMSG_RCON_AUTH)
 		{
+			if(ClientProtocol(ClientID) == NETPROTOCOL_SIX)
+				Unpacker.GetString(CUnpacker::SANITIZE_CC);
+
 			const char *pPw = Unpacker.GetString(CUnpacker::SANITIZE_CC);
 
 			if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && Unpacker.Error() == 0)
@@ -1132,7 +1138,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				}
 				else if(g_Config.m_SvRconPassword[0] && str_comp(pPw, g_Config.m_SvRconPassword) == 0)
 				{
-					CMsgPacker Msg(NETMSG_RCON_AUTH_ON, true);
+					CMsgPacker Msg(NETMSG_RCON_AUTH_ON, true, true);
 					SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 
 					m_aClients[ClientID].m_Authed = AUTHED_ADMIN;
@@ -1146,7 +1152,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				}
 				else if(g_Config.m_SvRconModPassword[0] && str_comp(pPw, g_Config.m_SvRconModPassword) == 0)
 				{
-					CMsgPacker Msg(NETMSG_RCON_AUTH_ON, true);
+					CMsgPacker Msg(NETMSG_RCON_AUTH_ON, true, true);
 					SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 
 					m_aClients[ClientID].m_Authed = AUTHED_MOD;
@@ -1180,7 +1186,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		}
 		else if(MsgID == NETMSG_PING)
 		{
-			CMsgPacker Msg(NETMSG_PING_REPLY, true);
+			CMsgPacker Msg(NETMSG_PING_REPLY, true, true);
 			SendMsg(&Msg, 0, ClientID, -1, m_aClients[ClientID].m_WorldID);
 		}
 		else
@@ -1498,7 +1504,7 @@ void CServer::SendServerInfo(int ClientID)
 		return;
 	}
 
-	CMsgPacker Msg(NETMSG_SERVERINFO, true);
+	CMsgPacker Msg(NETMSG_SERVERINFO, true, true);
 	GenerateServerInfo(&Msg, -1);
 	if(ClientID == -1)
 	{
@@ -1908,7 +1914,7 @@ void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
 	if(pServer->m_RconClientID >= 0 && pServer->m_RconClientID < MAX_PLAYERS &&
 		pServer->m_aClients[pServer->m_RconClientID].m_State != CClient::STATE_EMPTY)
 	{
-		CMsgPacker Msg(NETMSG_RCON_AUTH_OFF, true);
+		CMsgPacker Msg(NETMSG_RCON_AUTH_OFF, true, true);
 		pServer->SendMsg(&Msg, MSGFLAG_VITAL, pServer->m_RconClientID);
 
 		pServer->m_aClients[pServer->m_RconClientID].m_Authed = AUTHED_NO;
