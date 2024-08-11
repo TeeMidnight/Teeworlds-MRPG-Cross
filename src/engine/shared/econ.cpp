@@ -5,7 +5,7 @@
 #include "netban.h"
 
 
-int CEcon::NewClientCallback(int ClientID, void* pUser)
+int CEcon::NewClientCallback(int ClientID, void* pUser, int Protocol)
 {
 	CEcon* pThis = (CEcon*)pUser;
 
