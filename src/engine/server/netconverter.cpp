@@ -235,8 +235,8 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
                 char aCommand[16];
 	            str_format(aCommand, sizeof(aCommand), "%.*s", str_span(pCommandStr + 1, " "), pCommandStr + 1);
 
-                Msg7.AddString(aCommand, 0);
-                Msg7.AddString(str_skip_whitespaces_const(str_skip_to_whitespace_const(pCommandStr)), 0);
+                Msg7.AddString(aCommand, -1);
+                Msg7.AddString(str_skip_whitespaces_const(str_skip_to_whitespace_const(pCommandStr)), -1);
 
                 pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
                 Type = NETMSGTYPE_CL_COMMAND;
