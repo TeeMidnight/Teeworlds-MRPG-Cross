@@ -13,6 +13,7 @@ class CPacker
 	unsigned char m_aBuffer[PACKER_BUFFER_SIZE];
 	unsigned char *m_pCurrent;
 	unsigned char *m_pEnd;
+protected:
 	int m_Error;
 public:
 	void Reset();
