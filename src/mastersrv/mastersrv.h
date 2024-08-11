@@ -3,6 +3,7 @@
 #ifndef MASTERSRV_MASTERSRV_H
 #define MASTERSRV_MASTERSRV_H
 static const int MASTERSERVER_PORT = 8283;
+static const int MASTERSERVER6_PORT = 8300;
 
 enum ServerType
 {

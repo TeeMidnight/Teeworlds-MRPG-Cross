@@ -114,7 +114,7 @@ public:
 	int m_RconPasswordSet;
 	int m_GeneratedRconPassword;
 
-	CRegister m_Register;
+	CRegister m_Registers[NUM_REGISTERTYPES];
 	CMapChecker m_MapChecker;
 
 	CServer();

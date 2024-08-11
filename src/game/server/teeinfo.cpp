@@ -7,7 +7,7 @@ struct StdSkin
 {
 	char m_aSkinName[64];
 	// body, marking, decoration, hands, feet, eyes
-	char m_apSkinPartNames[NUM_SKINPARTS][MAX_SKIN_LENGTH];
+	char m_aaSkinPartNames[NUM_SKINPARTS][MAX_SKIN_LENGTH];
 	bool m_aUseCustomColors[NUM_SKINPARTS];
 	int m_aSkinPartColors[NUM_SKINPARTS];
 };
@@ -42,7 +42,7 @@ CTeeInfo::CTeeInfo(const char *apSkinPartNames[NUM_SKINPARTS], const int *pUseCu
 {
 	for(int i = 0; i < NUM_SKINPARTS; i++)
 	{
-		str_copy(m_apSkinPartNames[i], apSkinPartNames[i], sizeof(m_apSkinPartNames[i]));
+		str_copy(m_aaSkinPartNames[i], apSkinPartNames[i], sizeof(m_aaSkinPartNames[i]));
 		m_aUseCustomColors[i] = pUseCustomColors[i];
 		m_aSkinPartColors[i] = pSkinPartColors[i];
 	}
@@ -53,7 +53,7 @@ void CTeeInfo::FromSix()
 	// reset to default skin
 	for(int p = 0; p < 6; p++)
 	{
-		str_copy(m_apSkinPartNames[p], g_aStdSkins[0].m_apSkinPartNames[p], 24);
+		str_copy(m_aaSkinPartNames[p], g_aStdSkins[0].m_aaSkinPartNames[p], 24);
 		m_aUseCustomColors[p] = g_aStdSkins[0].m_aUseCustomColors[p];
 		m_aSkinPartColors[p] = g_aStdSkins[0].m_aSkinPartColors[p];
 	}
@@ -73,7 +73,7 @@ void CTeeInfo::FromSix()
 		{
 			for(int p = 0; p < NUM_SKINPARTS; p++)
 			{
-				str_copy(m_apSkinPartNames[p], StdSkin.m_apSkinPartNames[p], 24);
+				str_copy(m_aaSkinPartNames[p], StdSkin.m_aaSkinPartNames[p], 24);
 				m_aUseCustomColors[p] = StdSkin.m_aUseCustomColors[p];
 				m_aSkinPartColors[p] = StdSkin.m_aSkinPartColors[p];
 			}
@@ -82,12 +82,12 @@ void CTeeInfo::FromSix()
 	}
 
 	if(str_startswith(m_aSkinName, "kitty_"))
-		str_copy(m_apSkinPartNames[SKINPART_BODY], "kitty", 24);
+		str_copy(m_aaSkinPartNames[SKINPART_BODY], "kitty", 24);
 
 	if(str_startswith(m_aSkinName, "coala_"))
 	{
-		str_copy(m_apSkinPartNames[SKINPART_BODY], "bear", 24);
-		str_copy(m_apSkinPartNames[SKINPART_DECORATION], "hair", 24);
+		str_copy(m_aaSkinPartNames[SKINPART_BODY], "bear", 24);
+		str_copy(m_aaSkinPartNames[SKINPART_DECORATION], "hair", 24);
 	}
 
 	if(m_UseCustomColor)
@@ -121,7 +121,7 @@ void CTeeInfo::FromSeven()
 		bool match = true;
 		for(int p = 0; p < NUM_SKINPARTS; p++)
 		{
-			if(str_comp(m_apSkinPartNames[p], StdSkin.m_apSkinPartNames[p]) || m_aUseCustomColors[p] != StdSkin.m_aUseCustomColors[p] || (m_aUseCustomColors[p] && m_aSkinPartColors[p] != StdSkin.m_aSkinPartColors[p]))
+			if(str_comp(m_aaSkinPartNames[p], StdSkin.m_aaSkinPartNames[p]) || m_aUseCustomColors[p] != StdSkin.m_aUseCustomColors[p] || (m_aUseCustomColors[p] && m_aSkinPartColors[p] != StdSkin.m_aSkinPartColors[p]))
 			{
 				match = false;
 				break;
@@ -141,7 +141,7 @@ void CTeeInfo::FromSeven()
 	{
 		int matches = 0;
 		for(int p = 0; p < 3; p++)
-			if(str_comp(m_apSkinPartNames[p], g_aStdSkins[s].m_apSkinPartNames[p]) == 0)
+			if(str_comp(m_aaSkinPartNames[p], g_aStdSkins[s].m_aaSkinPartNames[p]) == 0)
 				matches++;
 
 		if(matches > best_matches)
@@ -167,7 +167,7 @@ bool CTeeInfo::operator==(const CTeeInfo& TeeInfo) const
 
 	for(int i = 0; i < NUM_SKINPARTS; i++)
 	{
-		if(str_comp(m_apSkinPartNames[i], TeeInfo.m_apSkinPartNames[i]))
+		if(str_comp(m_aaSkinPartNames[i], TeeInfo.m_aaSkinPartNames[i]))
 			return false;
 		if(m_aUseCustomColors[i] != TeeInfo.m_aUseCustomColors[i])
 			return false;
