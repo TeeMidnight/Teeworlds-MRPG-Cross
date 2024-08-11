@@ -29,7 +29,7 @@ TOKEN CNetServer::GetGlobalToken() const
 	return SecurityToken;
 }
 
-bool CNetServer::Open(NETADDR BindAddr, CConfig *pConfig, IConsole *pConsole, IEngine *pEngine, CNetBan *pNetBan,
+bool CNetServer::Open(NETADDR BindAddr, CConfiguration *pConfig, IConsole *pConsole, IEngine *pEngine, CNetBan *pNetBan,
 	int MaxClients, int MaxClientsPerIP, NETFUNC_NEWCLIENT pfnNewClient, NETFUNC_DELCLIENT pfnDelClient, void *pUser)
 {
 	// zero out the whole structure

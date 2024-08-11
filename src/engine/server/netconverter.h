@@ -7,12 +7,12 @@ class CNetConverter : public INetConverter
 {
     IServer *m_pServer;
     class CGS *m_pGameServer;
-    class CConfig *m_pConfig;
+    class CConfiguration *m_pConfig;
 
 private:
     IServer *Server() { return m_pServer; }
     class CGS *GameServer() { return m_pGameServer; }
-    class CConfig *Config() { return m_pConfig; }
+    class CConfiguration *Config() { return m_pConfig; }
 
     int GetExSnapID(const char *pUuidStr);
 
@@ -31,8 +31,8 @@ private:
     bool m_aClientLocal[MAX_CLIENTS];
 
 public:
-    CNetConverter(IServer *pServer, class CConfig *pConfig);
-    void Init(class CGS *pGameServer) override 
+    CNetConverter(IServer *pServer, class CConfiguration *pConfig);
+    void SetGameServer(class CGS *pGameServer) override 
     {
         m_pGameServer = pGameServer;
     }

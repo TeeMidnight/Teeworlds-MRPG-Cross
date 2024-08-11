@@ -9,7 +9,7 @@
 class CHostLookup : public IJob
 {
 private:
-	virtual void Run();
+	void Run() override;
 
 public:
 	CHostLookup();
@@ -31,9 +31,11 @@ protected:
 public:
 	virtual void Init() = 0;
 	virtual void InitLogfile() = 0;
+	virtual void QueryNetLogHandles(IOHANDLE *pHDLSend, IOHANDLE *pHDLRecv) = 0;
 	virtual void AddJob(std::shared_ptr<IJob> pJob) = 0;
+	static void RunJobBlocking(IJob *pJob);
 };
 
-extern IEngine *CreateEngine(const char *pAppname, bool Silent, int Jobs);
+extern IEngine *CreateEngine(const char *pAppname);
 
 #endif

@@ -570,6 +570,14 @@ typedef struct
 } NETADDR;
 
 /*
+	Function: net_invalidate_socket
+		Invalidates a socket.
+
+	Remarks:
+		You should close the socket before invalidating it.
+*/
+void net_invalidate_socket(NETSOCKET *socket);
+/*
 	Function: net_init
 		Initiates network functionallity.
 
@@ -1483,6 +1491,7 @@ void dbg_logger(DBG_LOGGER logger);
 void dbg_logger_stdout();
 void dbg_logger_debugger();
 void dbg_logger_file(const char *filename);
+void dbg_logger_filehandle(IOHANDLE handle);
 
 #if defined(CONF_FAMILY_WINDOWS)
 void dbg_console_init();

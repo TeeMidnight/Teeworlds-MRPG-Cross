@@ -2845,7 +2845,7 @@ int main(int argc, const char** argv) // ignore_convention
 
 	// create the components
 	int FlagMask = CFGFLAG_CLIENT;
-	IEngine* pEngine = CreateEngine("Teeworlds", false, 1);
+	IEngine* pEngine = CreateEngine("Teeworlds");
 	IConsole* pConsole = CreateConsole(FlagMask);
 	IStorageEngine* pStorage = CreateStorage("Teeworlds", IStorageEngine::STORAGETYPE_CLIENT, argc, argv); // ignore_convention
 	IConfig* pConfig = CreateConfig();

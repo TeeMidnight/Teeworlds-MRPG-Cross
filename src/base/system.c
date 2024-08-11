@@ -250,6 +250,13 @@ void dbg_logger_file(const char *filename)
 		dbg_msg("dbg/logger", "failed to open '%s' for logging", filename);
 }
 
+void dbg_logger_filehandle(IOHANDLE handle)
+{
+	logfile = handle;
+	if(logfile)
+		dbg_logger(logger_file);
+}
+
 #if defined(CONF_FAMILY_WINDOWS)
 static DWORD old_console_mode;
 
@@ -1476,6 +1483,11 @@ int net_would_block()
 #else
 	return net_errno() == EWOULDBLOCK;
 #endif
+}
+
+void net_invalidate_socket(NETSOCKET *socket)
+{
+	*socket = invalid_socket;
 }
 
 int net_init()

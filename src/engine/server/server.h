@@ -200,7 +200,7 @@ public:
 
 	void ProcessClientPacket(CNetChunk *pPacket);
 
-	void SendServerInfo(int ClientID);
+	void SendServerInfo(int ClientID) override;
 	void GenerateServerInfo(CPacker *pPacker, int Token);
 	void GenerateServerInfo6(CPacker *pPacker, int Token, int Type, NETADDR Addr);
 

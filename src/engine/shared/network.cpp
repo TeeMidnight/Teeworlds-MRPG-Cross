@@ -125,7 +125,7 @@ CNetBase::~CNetBase()
 		Shutdown();
 }
 
-void CNetBase::Init(NETSOCKET Socket, CConfig *pConfig, IConsole *pConsole, IEngine *pEngine)
+void CNetBase::Init(NETSOCKET Socket, CConfiguration *pConfig, IConsole *pConsole, IEngine *pEngine)
 {
 	m_Socket = Socket;
 	m_pConfig = pConfig;

@@ -191,6 +191,8 @@ public:
 	void OnResetClientData(int ClientID) override;
 	int GetRank(int AccountID) override;
 
+	CGS *GS() override { return this; }
+
 	/* #########################################################################
 		CONSOLE GAMECONTEXT
 	######################################################################### */

@@ -5,7 +5,7 @@
 #include "network.h"
 
 
-bool CNetClient::Open(NETADDR BindAddr, CConfig *pConfig, IConsole *pConsole, IEngine *pEngine, int Flags)
+bool CNetClient::Open(NETADDR BindAddr, CConfiguration *pConfig, IConsole *pConsole, IEngine *pEngine, int Flags)
 {
 	// open socket
 	NETSOCKET Socket;

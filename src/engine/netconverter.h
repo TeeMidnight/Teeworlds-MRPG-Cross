@@ -20,13 +20,13 @@ public:
 	virtual bool PrevConvertClientMsg(CMsgUnpacker *pItem, int& Type, bool System, int FromClientID) = 0;
 	virtual int SendMsgConvert(CMsgPacker *pMsg, int Flags, int ToClientID, int Depth = 0) = 0;
 	virtual int SendSystemMsgConvert(CMsgPacker *pMsg, int Flags, int ToClientID, int Depth = 0) = 0;
-	virtual void Init(class CGS *pGameServer) = 0;
+	virtual void SetGameServer(class CGS *pGameServer) = 0;
 	virtual void ResetChatTick() = 0;
 	virtual void ResetSnapItemsEx() = 0;
 	virtual void ResetEventID() = 0;
 	virtual void SnapItemUuid(int ClientID) = 0;
 };
 
-extern INetConverter *CreateNetConverter(class IServer *pServer, class CConfig *pConfig);
+extern INetConverter *CreateNetConverter(class IServer *pServer, class CConfiguration *pConfig);
 
 #endif
