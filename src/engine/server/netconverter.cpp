@@ -138,7 +138,7 @@ void FormatTimeDiff(char *pBuf, int Size, int Time, int Precision, bool ForceSig
 	AppendDecimals(pBuf, Size, Time, Precision);
 }
 
-CNetConverter::CNetConverter(IServer *pServer, class CConfig *pConfig) :
+CNetConverter::CNetConverter(IServer *pServer, class CConfiguration *pConfig) :
     m_pServer(pServer),
     m_pConfig(pConfig)
 {
@@ -424,7 +424,10 @@ bool CNetConverter::PrevConvertClientMsg(CMsgUnpacker *pItem, int& Type, bool Sy
         return true;
     
     if(Server()->ClientProtocol(FromClientID) == NETPROTOCOL_SIX)
+    {
+        SetGameServer(Server()->GameServer(Server()->GetClientWorldID(FromClientID))->GS());
         return DeepConvertClientMsg6(pItem, Type, System, FromClientID);
+    }
 
     return false;
 }
@@ -730,6 +733,7 @@ bool CNetConverter::SnapItemConvert(void *pItem, int Type, int ID, int Size, int
 
     if(Server()->ClientProtocol(ToClientID) == NETPROTOCOL_SIX)
     {
+        SetGameServer(Server()->GameServer(Server()->GetClientWorldID(ToClientID))->GS());
         return DeepSnapConvert6(pItem, Type, ID, Size, ToClientID);
     }
 
@@ -1150,6 +1154,7 @@ int CNetConverter::SendMsgConvert(CMsgPacker *pMsg, int Flags, int ToClientID, i
     }
     else if(Server()->ClientProtocol(ToClientID) == NETPROTOCOL_SIX)
     {
+        SetGameServer(Server()->GameServer(Server()->GetClientWorldID(ToClientID))->GS());
         return DeepMsgConvert6(pMsg, Flags | MSGFLAG_NORECORD, ToClientID); // no record
     }
     return -1;
@@ -1206,7 +1211,7 @@ int CNetConverter::DeepSystemMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClie
         case NETMSG_MAP_CHANGE:
         {
             CMsgPacker Msg6(protocol6::NETMSG_MAP_CHANGE, true, false);
-            Msg6.AddString(Unpacker.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES)); // Map name
+            Msg6.AddString(Unpacker.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1); // Map name
             Msg6.AddInt(Unpacker.GetInt()); // Crc
             Msg6.AddInt(Unpacker.GetInt()); // Size
 
@@ -1268,6 +1273,7 @@ int CNetConverter::SendSystemMsgConvert(CMsgPacker *pMsg, int Flags, int ToClien
     }
     else if(Server()->ClientProtocol(ToClientID) == NETPROTOCOL_SIX)
     {
+        SetGameServer(Server()->GameServer(Server()->GetClientWorldID(ToClientID))->GS());
         return DeepSystemMsgConvert6(pMsg, Flags | MSGFLAG_NORECORD, ToClientID); // no record
     }
 
@@ -1303,4 +1309,4 @@ void CNetConverter::SnapItemUuid(int ClientID)
     }
 }
 
-INetConverter *CreateNetConverter(IServer *pServer, class CConfig *pConfig) { return new CNetConverter(pServer, pConfig); }
+INetConverter *CreateNetConverter(IServer *pServer, class CConfiguration *pConfig) { return new CNetConverter(pServer, pConfig); }

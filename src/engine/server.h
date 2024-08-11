@@ -142,6 +142,8 @@ public:
 	virtual bool IsBanned(int ClientID) = 0;
 	virtual bool IsEmpty(int ClientID) const = 0;
 	virtual void Kick(int ClientID, const char *pReason) = 0;
+
+	virtual void SendServerInfo(int ClientID) = 0;
 };
 
 class IGameServer : public IInterface
@@ -178,6 +180,8 @@ public:
 	virtual const char *Version() const = 0;
 	virtual const char *NetVersion() const = 0;
 	virtual int GetRank(int AuthID) = 0;
+
+	virtual class CGS *GS() = 0;
 };
 
 extern IGameServer *CreateGameServer();
