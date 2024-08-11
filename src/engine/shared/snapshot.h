@@ -2,22 +2,25 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #ifndef ENGINE_SHARED_SNAPSHOT_H
 #define ENGINE_SHARED_SNAPSHOT_H
+
 #include <base/system.h>
 
 // CSnapshot
+
 class CSnapshotItem
 {
 	friend class CSnapshotBuilder;
+	friend class CNetConverter;
 	int m_TypeAndID;
 
-	int* Data() { return (int*)(this + 1); }
+	int *Data() { return (int *)(this+1); }
 
 public:
-	const int* Data() const { return (int*)(this + 1); }
-	int Type() const { return m_TypeAndID >> 16; }
-	int ID() const { return m_TypeAndID & 0xffff; }
+	const int *Data() const { return (int *)(this+1); }
+	int Type() const { return m_TypeAndID>>16; }
+	int ID() const { return m_TypeAndID&0xffff; }
 	int Key() const { return m_TypeAndID; }
-	void SetKey(int Type, int ID) { m_TypeAndID = (Type << 16) | (ID & 0xffff); }
+	void SetKey(int Type, int ID) { m_TypeAndID = (Type<<16)|(ID&0xffff); }
 	void Invalidate() { m_TypeAndID = -1; }
 };
 
@@ -28,25 +31,27 @@ class CSnapshot
 	int m_DataSize;
 	int m_NumItems;
 
-	int* SortedKeys() const { return (int*)(this + 1); }
-	int* Offsets() const { return (int*)(SortedKeys() + m_NumItems); }
-	char* DataStart() const { return (char*)(Offsets() + m_NumItems); }
+	int *SortedKeys() const { return (int *)(this+1); }
+	int *Offsets() const { return (int *)(SortedKeys()+m_NumItems); }
+	char *DataStart() const { return (char*)(Offsets()+m_NumItems); }
 
 public:
 	enum
 	{
-		MAX_PARTS = 64,
-		MAX_SIZE = MAX_PARTS * 1024
+		MAX_TYPE = 0x7fff,
+		MAX_ID = 0xffff,
+		MAX_PARTS	= 64,
+		MAX_SIZE	= MAX_PARTS*1024
 	};
 
 	void Clear() { m_DataSize = 0; m_NumItems = 0; }
 	int NumItems() const { return m_NumItems; }
-	const CSnapshotItem* GetItem(int Index) const;
+	const CSnapshotItem *GetItem(int Index) const;
 	int GetItemSize(int Index) const;
 	int GetItemIndex(int Key) const;
-	void InvalidateItem(int Index) const;
+	void InvalidateItem(int Index);
 
-	int Serialize(char* pDstData) const;
+	int Serialize(char *pDstData) const;
 
 	int Crc() const;
 	void DebugDump() const;
@@ -70,24 +75,21 @@ public:
 private:
 	enum
 	{
-		MAX_NETOBJSIZES = 64
+		MAX_NETOBJSIZES=64
 	};
 	short m_aItemSizes[MAX_NETOBJSIZES];
-	int m_aSnapshotDataRate[0xffff];
-	int m_aSnapshotDataUpdates[0xffff];
-	int m_SnapshotCurrent;
+	int m_aSnapshotDataRate[CSnapshot::MAX_TYPE + 1];
+	int m_aSnapshotDataUpdates[CSnapshot::MAX_TYPE + 1];
 	CData m_Empty;
-
-	void UndiffItem(const int* pPast, const int* pDiff, int* pOut, int Size);
 
 public:
 	CSnapshotDelta();
 	int GetDataRate(int Index) const { return m_aSnapshotDataRate[Index]; }
 	int GetDataUpdates(int Index) const { return m_aSnapshotDataUpdates[Index]; }
 	void SetStaticsize(int ItemType, int Size);
-	CData* EmptyDelta();
-	int CreateDelta(const class CSnapshot* pFrom, class CSnapshot* pTo, void* pData);
-	int UnpackDelta(const class CSnapshot* pFrom, class CSnapshot* pTo, const void* pData, int DataSize);
+	const CData *EmptyDelta() const;
+	int CreateDelta(const class CSnapshot *pFrom, class CSnapshot *pTo, void *pDstData);
+	int UnpackDelta(const class CSnapshot *pFrom, class CSnapshot *pTo, const void *pSrcData, int DataSize);
 };
 
 
@@ -99,26 +101,27 @@ public:
 	class CHolder
 	{
 	public:
-		CHolder* m_pPrev;
-		CHolder* m_pNext;
+		CHolder *m_pPrev;
+		CHolder *m_pNext;
 
 		int64 m_Tagtime;
 		int m_Tick;
 
 		int m_SnapSize;
-		CSnapshot* m_pSnap;
-		CSnapshot* m_pAltSnap;
+		CSnapshot *m_pSnap;
+		CSnapshot *m_pAltSnap;
 	};
 
 
-	CHolder* m_pFirst;
-	CHolder* m_pLast;
+	CHolder *m_pFirst;
+	CHolder *m_pLast;
 
+	~CSnapshotStorage();
 	void Init();
 	void PurgeAll();
 	void PurgeUntil(int Tick);
-	void Add(int Tick, int64 Tagtime, int DataSize, void* pData, int CreateAlt);
-	int Get(int Tick, int64* pTagtime, CSnapshot** ppData, CSnapshot** ppAltData) const;
+	void Add(int Tick, int64 Tagtime, int DataSize, const void *pData, bool CreateAlt);
+	int Get(int Tick, int64 *pTagtime, CSnapshot **ppData, CSnapshot **ppAltData) const;
 };
 
 class CSnapshotBuilder
@@ -133,18 +136,22 @@ class CSnapshotBuilder
 
 	int m_aOffsets[MAX_ITEMS];
 	int m_NumItems;
-
 public:
+
 	void Init();
-	void Init(const CSnapshot* pSnapshot);
-	bool UnserializeSnap(const char* pSrcData, int SrcSize);
+	void Init(const CSnapshot *pSnapshot);
+	bool UnserializeSnap(const char *pSrcData, int SrcSize);
 
-	void* NewItem(int Type, int ID, int Size);
+	void *NewItem(int Type, int ID, int Size);
 
-	CSnapshotItem* GetItem(int Index);
-	int* GetItemData(int Key);
+	CSnapshotItem *GetItem(int Index) const;
+	int *GetItemData(int Key) const;
 
-	int Finish(void* pSnapdata);
+	int Finish(void *pSnapdata);
+
+	int GetOffest(int Index) const { return m_aOffsets[Index];}
+	int GetDataSize() const { return m_DataSize; }
+	int NumItems() const { return m_NumItems; }
 };
 
 

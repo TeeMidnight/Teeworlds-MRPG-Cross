@@ -1,23 +1,27 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
-#include <base/tl/range.h>
-#include <base/tl/sorted_array.h>
+#include <algorithm>
+#include <limits.h>
+
+#include <base/tl/algorithm.h>
 
 #include "snapshot.h"
 #include "compression.h"
 
+#include <generated/protocolglue.h>
+
 // CSnapshot
 
-const CSnapshotItem* CSnapshot::GetItem(int Index) const
+const CSnapshotItem *CSnapshot::GetItem(int Index) const
 {
-	return (const CSnapshotItem*)(DataStart() + Offsets()[Index]);
+	return (const CSnapshotItem *)(DataStart() + Offsets()[Index]);
 }
 
 int CSnapshot::GetItemSize(int Index) const
 {
-	if(Index == m_NumItems - 1)
+	if(Index == m_NumItems-1)
 		return (m_DataSize - Offsets()[Index]) - sizeof(CSnapshotItem);
-	return (Offsets()[Index + 1] - Offsets()[Index]) - sizeof(CSnapshotItem);
+	return (Offsets()[Index+1] - Offsets()[Index]) - sizeof(CSnapshotItem);
 }
 
 int CSnapshot::GetItemIndex(int Key) const
@@ -34,19 +38,19 @@ int CSnapshot::GetItemIndex(int Key) const
 	return Index;
 }
 
-void CSnapshot::InvalidateItem(int Index) const
+void CSnapshot::InvalidateItem(int Index)
 {
-	((CSnapshotItem*)(DataStart() + Offsets()[Index]))->Invalidate();
+	((CSnapshotItem *)(DataStart() + Offsets()[Index]))->Invalidate();
 }
 
-int CSnapshot::Serialize(char* pDstData) const
+int CSnapshot::Serialize(char *pDstData) const
 {
-	int* pData = (int*)pDstData;
+	int *pData = (int*)pDstData;
 	pData[0] = m_DataSize;
 	pData[1] = m_NumItems;
 
-	mem_copy(pData + 2, Offsets(), sizeof(int) * m_NumItems);
-	mem_copy(pData + 2 + m_NumItems, DataStart(), m_DataSize);
+	mem_copy(pData+2, Offsets(), sizeof(int)*m_NumItems);
+	mem_copy(pData+2+m_NumItems, DataStart(), m_DataSize);
 
 	return sizeof(int) * (2 + m_NumItems) + m_DataSize;
 }
@@ -57,10 +61,10 @@ int CSnapshot::Crc() const
 
 	for(int i = 0; i < m_NumItems; i++)
 	{
-		const CSnapshotItem* pItem = GetItem(i);
+		const CSnapshotItem *pItem = GetItem(i);
 		int Size = GetItemSize(i);
 
-		for(int b = 0; b < Size / 4; b++)
+		for(int b = 0; b < Size/4; b++)
 			Crc += pItem->Data()[b];
 	}
 	return Crc;
@@ -71,10 +75,10 @@ void CSnapshot::DebugDump() const
 	dbg_msg("snapshot", "data_size=%d num_items=%d", m_DataSize, m_NumItems);
 	for(int i = 0; i < m_NumItems; i++)
 	{
-		const CSnapshotItem* pItem = GetItem(i);
+		const CSnapshotItem *pItem = GetItem(i);
 		int Size = GetItemSize(i);
 		dbg_msg("snapshot", "\ttype=%d id=%d", pItem->Type(), pItem->ID());
-		for(int b = 0; b < Size / 4; b++)
+		for(int b = 0; b < Size/4; b++)
 			dbg_msg("snapshot", "\t\t%3d %12d\t%08x", b, pItem->Data()[b], pItem->Data()[b]);
 	}
 }
@@ -82,19 +86,29 @@ void CSnapshot::DebugDump() const
 
 // CSnapshotDelta
 
-struct CItemList
-{
-	int m_Num;
-	int m_aKeys[64];
-	int m_aIndex[64];
-};
-
 enum
 {
 	HASHLIST_SIZE = 256,
+	HASHLIST_BUCKET_SIZE = 64,
 };
 
-static void GenerateHash(CItemList* pHashlist, const CSnapshot* pSnapshot)
+struct CItemList
+{
+	int m_Num;
+	int m_aKeys[HASHLIST_BUCKET_SIZE];
+	int m_aIndex[HASHLIST_BUCKET_SIZE];
+};
+
+inline unsigned CalcHashID(int Key)
+{
+	// djb2 (http://www.cse.yorku.ca/~oz/hash.html)
+	unsigned Hash = 5381;
+	for(unsigned Shift = 0; Shift < sizeof(int); Shift++)
+		Hash = ((Hash << 5) + Hash) + ((Key >> (Shift * 8)) & 0xFF);
+	return Hash % HASHLIST_SIZE;
+}
+
+static void GenerateHash(CItemList *pHashlist, const CSnapshot *pSnapshot)
 {
 	for(int i = 0; i < HASHLIST_SIZE; i++)
 		pHashlist[i].m_Num = 0;
@@ -102,8 +116,8 @@ static void GenerateHash(CItemList* pHashlist, const CSnapshot* pSnapshot)
 	for(int i = 0; i < pSnapshot->NumItems(); i++)
 	{
 		int Key = pSnapshot->GetItem(i)->Key();
-		int HashID = ((Key >> 12) & 0xf0) | (Key & 0xf);
-		if(pHashlist[HashID].m_Num != 64)
+		unsigned HashID = CalcHashID(Key);
+		if(pHashlist[HashID].m_Num < HASHLIST_BUCKET_SIZE)
 		{
 			pHashlist[HashID].m_aIndex[pHashlist[HashID].m_Num] = i;
 			pHashlist[HashID].m_aKeys[pHashlist[HashID].m_Num] = Key;
@@ -112,24 +126,24 @@ static void GenerateHash(CItemList* pHashlist, const CSnapshot* pSnapshot)
 	}
 }
 
-static int GetItemIndexHashed(int Key, const CItemList* pHashlist)
+static int GetItemIndexHashed(int Key, const CItemList *pHashlist)
 {
-	int HashID = ((Key >> 12) & 0xf0) | (Key & 0xf);
-	for(int i = 0; i < pHashlist[HashID].m_Num; i++)
-	{
-		if(pHashlist[HashID].m_aKeys[i] == Key)
-			return pHashlist[HashID].m_aIndex[i];
+		unsigned HashID = CalcHashID(Key);
+		for(int i = 0; i < pHashlist[HashID].m_Num; i++)
+		{
+			if(pHashlist[HashID].m_aKeys[i] == Key)
+				return pHashlist[HashID].m_aIndex[i];
 	}
 
 	return -1;
 }
 
-static int DiffItem(const int* pPast, const int* pCurrent, int* pOut, int Size)
+static int DiffItem(const int *pPast, const int *pCurrent, int *pOut, int Size)
 {
 	int Needed = 0;
 	while(Size)
 	{
-		*pOut = *pCurrent - *pPast;
+		*pOut = *pCurrent-*pPast;
 		Needed |= *pOut;
 		pOut++;
 		pPast++;
@@ -140,19 +154,19 @@ static int DiffItem(const int* pPast, const int* pCurrent, int* pOut, int Size)
 	return Needed;
 }
 
-void CSnapshotDelta::UndiffItem(const int* pPast, const int* pDiff, int* pOut, int Size)
+static void UndiffItem(const int *pPast, const int *pDiff, int *pOut, int Size, int *pDataRate)
 {
 	while(Size)
 	{
-		*pOut = *pPast + *pDiff;
+		*pOut = *pPast+*pDiff;
 
 		if(*pDiff == 0)
-			m_aSnapshotDataRate[m_SnapshotCurrent] += 1;
+			*pDataRate += 1;
 		else
 		{
-			unsigned char aBuf[16];
-			unsigned char* pEnd = CVariableInt::Pack(aBuf, *pDiff);
-			m_aSnapshotDataRate[m_SnapshotCurrent] += (int)(pEnd - (unsigned char*)aBuf) * 8;
+			unsigned char aBuf[CVariableInt::MAX_BYTES_PACKED];
+			unsigned char *pEnd = CVariableInt::Pack(aBuf, *pDiff, sizeof(aBuf));
+			*pDataRate += (int)(pEnd - (unsigned char*)aBuf) * 8;
 		}
 
 		pOut++;
@@ -167,7 +181,6 @@ CSnapshotDelta::CSnapshotDelta()
 	mem_zero(m_aItemSizes, sizeof(m_aItemSizes));
 	mem_zero(m_aSnapshotDataRate, sizeof(m_aSnapshotDataRate));
 	mem_zero(m_aSnapshotDataUpdates, sizeof(m_aSnapshotDataUpdates));
-	m_SnapshotCurrent = 0;
 	mem_zero(&m_Empty, sizeof(m_Empty));
 }
 
@@ -178,21 +191,20 @@ void CSnapshotDelta::SetStaticsize(int ItemType, int Size)
 	m_aItemSizes[ItemType] = Size;
 }
 
-CSnapshotDelta::CData* CSnapshotDelta::EmptyDelta()
+const CSnapshotDelta::CData *CSnapshotDelta::EmptyDelta() const
 {
 	return &m_Empty;
 }
 
 // TODO: OPT: this should be made much faster
-int CSnapshotDelta::CreateDelta(const CSnapshot* pFrom, CSnapshot* pTo, void* pDstData)
+int CSnapshotDelta::CreateDelta(const CSnapshot *pFrom, CSnapshot *pTo, void *pDstData)
 {
-	CData* pDelta = (CData*)pDstData;
-	int* pData = (int*)pDelta->m_pData;
+	CData *pDelta = (CData *)pDstData;
+	int *pData = (int *)pDelta->m_pData;
 	int i, ItemSize, PastIndex;
-	const CSnapshotItem* pFromItem;
-	const CSnapshotItem* pCurItem;
-	const CSnapshotItem* pPastItem;
-	int SizeCount = 0;
+	const CSnapshotItem *pFromItem;
+	const CSnapshotItem *pCurItem;
+	const CSnapshotItem *pPastItem;
 
 	pDelta->m_NumDeletedItems = 0;
 	pDelta->m_NumUpdateItems = 0;
@@ -237,20 +249,21 @@ int CSnapshotDelta::CreateDelta(const CSnapshot* pFrom, CSnapshot* pTo, void* pD
 
 		if(PastIndex != -1)
 		{
-			int* pItemDataDst = pData + 3;
+			int *pItemDataDst = pData+3;
 
 			pPastItem = pFrom->GetItem(PastIndex);
 
 			if(!IncludeSize)
-				pItemDataDst = pData + 2;
+				pItemDataDst = pData+2;
 
-			if(DiffItem(pPastItem->Data(), (int*)pCurItem->Data(), pItemDataDst, ItemSize / 4))
+			if(DiffItem(pPastItem->Data(), (int*)pCurItem->Data(), pItemDataDst, ItemSize/4))
 			{
+
 				*pData++ = pCurItem->Type();
 				*pData++ = pCurItem->ID();
 				if(IncludeSize)
-					*pData++ = ItemSize / 4;
-				pData += ItemSize / 4;
+					*pData++ = ItemSize/4;
+				pData += ItemSize/4;
 				pDelta->m_NumUpdateItems++;
 			}
 		}
@@ -259,68 +272,47 @@ int CSnapshotDelta::CreateDelta(const CSnapshot* pFrom, CSnapshot* pTo, void* pD
 			*pData++ = pCurItem->Type();
 			*pData++ = pCurItem->ID();
 			if(IncludeSize)
-				*pData++ = ItemSize / 4;
+				*pData++ = ItemSize/4;
 
 			mem_copy(pData, pCurItem->Data(), ItemSize);
-			SizeCount += ItemSize;
-			pData += ItemSize / 4;
+			pData += ItemSize/4;
 			pDelta->m_NumUpdateItems++;
 		}
 	}
 
-	if(0)
-	{
-		dbg_msg("snapshot", "%d %d %d",
-			pDelta->m_NumDeletedItems,
-			pDelta->m_NumUpdateItems,
-			pDelta->m_NumTempItems);
-	}
-
-	/*
-	// TODO: pack temp stuff
-	// finish
-	//mem_copy(pDelta->offsets, deleted, pDelta->num_deleted_items*sizeof(int));
-	//mem_copy(&(pDelta->offsets[pDelta->num_deleted_items]), update, pDelta->num_update_items*sizeof(int));
-	//mem_copy(&(pDelta->offsets[pDelta->num_deleted_items+pDelta->num_update_items]), temp, pDelta->num_temp_items*sizeof(int));
-	//mem_copy(pDelta->data_start(), data, data_size);
-	//pDelta->data_size = data_size;
-	* */
-
 	if(!pDelta->m_NumDeletedItems && !pDelta->m_NumUpdateItems && !pDelta->m_NumTempItems)
 		return 0;
 
-	return (int)((char*)pData - (char*)pDstData);
+	return (int)((char*)pData-(char*)pDstData);
 }
 
-static int RangeCheck(const void* pEnd, const void* pPtr, int Size)
+static int RangeCheck(const void *pEnd, const void *pPtr, int Size)
 {
-	if((const char*)pPtr + Size > (const char*)pEnd)
+	if((const char *)pPtr + Size > (const char *)pEnd)
 		return -1;
 	return 0;
 }
 
-int CSnapshotDelta::UnpackDelta(const CSnapshot* pFrom, CSnapshot* pTo, const void* pSrcData, int DataSize)
+int CSnapshotDelta::UnpackDelta(const CSnapshot *pFrom, CSnapshot *pTo, const void *pSrcData, int DataSize)
 {
 	CSnapshotBuilder Builder;
-	const CData* pDelta = (const CData*)pSrcData;
-	const int* pData = (const int*)pDelta->m_pData;
-	const int* pEnd = (const int*)(((const char*)pSrcData + DataSize));
+	const CData *pDelta = (const CData *)pSrcData;
+	const int *pData = (const int *)pDelta->m_pData;
+	const int *pEnd = (const int *)(((const char *)pSrcData + DataSize));
 
-	const CSnapshotItem* pFromItem;
+	const CSnapshotItem *pFromItem;
 	int Keep, ItemSize;
-	const int* pDeleted;
+	const int *pDeleted;
 	int ID, Type, Key;
 	int FromIndex;
-	int* pNewData;
+	int *pNewData;
 
 	Builder.Init();
 
 	// unpack deleted stuff
 	pDeleted = pData;
 	if(pDelta->m_NumDeletedItems < 0)
-	{
 		return -1;
-	}
 	pData += pDelta->m_NumDeletedItems;
 	if(pData > pEnd)
 		return -1;
@@ -353,31 +345,36 @@ int CSnapshotDelta::UnpackDelta(const CSnapshot* pFrom, CSnapshot* pTo, const vo
 	// unpack updated stuff
 	for(int i = 0; i < pDelta->m_NumUpdateItems; i++)
 	{
-		if(pData + 2 > pEnd)
+		if(pData+2 > pEnd)
 			return -1;
 
 		Type = *pData++;
-		if(Type < 0)
-			return -1;
+		if(Type < 0 || Type > CSnapshot::MAX_TYPE)
+			return -3;
+
 		ID = *pData++;
+		if(ID < 0 || ID > CSnapshot::MAX_ID)
+			return -3;
+
 		if(Type < MAX_NETOBJSIZES && m_aItemSizes[Type])
 			ItemSize = m_aItemSizes[Type];
 		else
 		{
-			if(pData + 1 > pEnd)
+			if(pData+1 > pEnd)
 				return -2;
+			if(*pData < 0 || *pData > INT_MAX / 4)
+				return -3;
 			ItemSize = (*pData++) * 4;
 		}
-		m_SnapshotCurrent = Type;
 
 		if(RangeCheck(pEnd, pData, ItemSize) || ItemSize < 0) return -3;
 
-		Key = (Type << 16) | (ID & 0xffff);
+		Key = (Type<<16)|(ID&0xffff);
 
 		// create the item if needed
 		pNewData = Builder.GetItemData(Key);
 		if(!pNewData)
-			pNewData = (int*)Builder.NewItem(Key >> 16, Key & 0xffff, ItemSize);
+			pNewData = (int *)Builder.NewItem(Key>>16, Key&0xffff, ItemSize);
 
 		//if(range_check(pEnd, pNewData, ItemSize)) return -4;
 
@@ -385,17 +382,17 @@ int CSnapshotDelta::UnpackDelta(const CSnapshot* pFrom, CSnapshot* pTo, const vo
 		if(FromIndex != -1)
 		{
 			// we got an update so we need to apply the diff
-			UndiffItem(pFrom->GetItem(FromIndex)->Data(), pData, pNewData, ItemSize / 4);
-			m_aSnapshotDataUpdates[m_SnapshotCurrent]++;
+			UndiffItem(pFrom->GetItem(FromIndex)->Data(), pData, pNewData, ItemSize / 4, &m_aSnapshotDataRate[Type]);
+			m_aSnapshotDataUpdates[Type]++;
 		}
 		else // no previous, just copy the pData
 		{
 			mem_copy(pNewData, pData, ItemSize);
-			m_aSnapshotDataRate[m_SnapshotCurrent] += ItemSize * 8;
-			m_aSnapshotDataUpdates[m_SnapshotCurrent]++;
+			m_aSnapshotDataRate[Type] += ItemSize * 8;
+			m_aSnapshotDataUpdates[Type]++;
 		}
 
-		pData += ItemSize / 4;
+		pData += ItemSize/4;
 	}
 
 	// finish up
@@ -405,6 +402,11 @@ int CSnapshotDelta::UnpackDelta(const CSnapshot* pFrom, CSnapshot* pTo, const vo
 
 // CSnapshotStorage
 
+CSnapshotStorage::~CSnapshotStorage()
+{
+	PurgeAll();
+}
+
 void CSnapshotStorage::Init()
 {
 	m_pFirst = 0;
@@ -413,12 +415,11 @@ void CSnapshotStorage::Init()
 
 void CSnapshotStorage::PurgeAll()
 {
-	CHolder* pHolder = m_pFirst;
-	CHolder* pNext;
+	CHolder *pHolder = m_pFirst;
 
 	while(pHolder)
 	{
-		pNext = pHolder->m_pNext;
+		CHolder *pNext = pHolder->m_pNext;
 		mem_free(pHolder);
 		pHolder = pNext;
 	}
@@ -430,18 +431,17 @@ void CSnapshotStorage::PurgeAll()
 
 void CSnapshotStorage::PurgeUntil(int Tick)
 {
-	CHolder* pHolder = m_pFirst;
-	CHolder* pNext;
+	CHolder *pHolder = m_pFirst;
 
 	while(pHolder)
 	{
-		pNext = pHolder->m_pNext;
+		CHolder *pNext = pHolder->m_pNext;
 		if(pHolder->m_Tick >= Tick)
 			return; // no more to remove
 		mem_free(pHolder);
 
 		// did we come to the end of the list?
-		if(!pNext)
+		if (!pNext)
 			break;
 
 		m_pFirst = pNext;
@@ -455,26 +455,26 @@ void CSnapshotStorage::PurgeUntil(int Tick)
 	m_pLast = 0;
 }
 
-void CSnapshotStorage::Add(int Tick, int64 Tagtime, int DataSize, void* pData, int CreateAlt)
+void CSnapshotStorage::Add(int Tick, int64 Tagtime, int DataSize, const void *pData, bool CreateAlt)
 {
 	// allocate memory for holder + snapshot_data
-	int TotalSize = sizeof(CHolder) + DataSize;
+	int TotalSize = sizeof(CHolder)+DataSize;
 
 	if(CreateAlt)
 		TotalSize += DataSize;
 
-	CHolder* pHolder = (CHolder*)mem_alloc(TotalSize, 1);
+	CHolder *pHolder = (CHolder *)mem_alloc(TotalSize);
 
 	// set data
 	pHolder->m_Tick = Tick;
 	pHolder->m_Tagtime = Tagtime;
 	pHolder->m_SnapSize = DataSize;
-	pHolder->m_pSnap = (CSnapshot*)(pHolder + 1);
+	pHolder->m_pSnap = (CSnapshot*)(pHolder+1);
 	mem_copy(pHolder->m_pSnap, pData, DataSize);
 
 	if(CreateAlt) // create alternative if wanted
 	{
-		pHolder->m_pAltSnap = (CSnapshot*)(((char*)pHolder->m_pSnap) + DataSize);
+		pHolder->m_pAltSnap = (CSnapshot*)(((char *)pHolder->m_pSnap) + DataSize);
 		mem_copy(pHolder->m_pAltSnap, pData, DataSize);
 	}
 	else
@@ -491,9 +491,9 @@ void CSnapshotStorage::Add(int Tick, int64 Tagtime, int DataSize, void* pData, i
 	m_pLast = pHolder;
 }
 
-int CSnapshotStorage::Get(int Tick, int64* pTagtime, CSnapshot** ppData, CSnapshot** ppAltData) const
+int CSnapshotStorage::Get(int Tick, int64 *pTagtime, CSnapshot **ppData, CSnapshot **ppAltData) const
 {
-	CHolder* pHolder = m_pFirst;
+	CHolder *pHolder = m_pFirst;
 
 	while(pHolder)
 	{
@@ -522,12 +522,12 @@ void CSnapshotBuilder::Init()
 	m_NumItems = 0;
 }
 
-void CSnapshotBuilder::Init(const CSnapshot* pSnapshot)
+void CSnapshotBuilder::Init(const CSnapshot *pSnapshot)
 {
-	if(pSnapshot->m_DataSize + sizeof(CSnapshot) + pSnapshot->m_NumItems * sizeof(int) * 2 > CSnapshot::MAX_SIZE || pSnapshot->m_NumItems > MAX_ITEMS)
+	if(pSnapshot->m_DataSize + sizeof(CSnapshot) + pSnapshot->m_NumItems * sizeof(int)*2 > CSnapshot::MAX_SIZE || pSnapshot->m_NumItems > MAX_ITEMS)
 	{
 		// key and offset per item
-		dbg_assert(m_DataSize + sizeof(CSnapshot) + m_NumItems * sizeof(int) * 2 < CSnapshot::MAX_SIZE, "too much data");
+		dbg_assert(m_DataSize + sizeof(CSnapshot) + m_NumItems * sizeof(int)*2 < CSnapshot::MAX_SIZE, "too much data");
 		dbg_assert(m_NumItems < MAX_ITEMS, "too many items");
 		dbg_msg("snapshot", "invalid snapshot"); // remove me
 		m_DataSize = 0;
@@ -537,30 +537,30 @@ void CSnapshotBuilder::Init(const CSnapshot* pSnapshot)
 
 	m_DataSize = pSnapshot->m_DataSize;
 	m_NumItems = pSnapshot->m_NumItems;
-	mem_copy(m_aOffsets, pSnapshot->Offsets(), sizeof(int) * m_NumItems);
+	mem_copy(m_aOffsets, pSnapshot->Offsets(), sizeof(int)*m_NumItems);
 	mem_copy(m_aData, pSnapshot->DataStart(), m_DataSize);
 }
 
-bool CSnapshotBuilder::UnserializeSnap(const char* pSrcData, int SrcSize)
+bool CSnapshotBuilder::UnserializeSnap(const char *pSrcData, int SrcSize)
 {
 	m_DataSize = 0;
 	m_NumItems = 0;
 
-	const int* pData = (const int*)pSrcData;
-	if(SrcSize < (int)sizeof(int) * 2)
+	const int *pData = (const int*)pSrcData;
+	if(SrcSize < (int)sizeof(int)*2)
 		return false;
 
 	int DataSize = pData[0];
 	int NumItems = pData[1];
 	int CompleteSize = DataSize + sizeof(int) * (2 + NumItems);
-	int NewSnapSize = DataSize + sizeof(CSnapshot) + NumItems * sizeof(int) * 2;
+	int NewSnapSize = DataSize + sizeof(CSnapshot) + NumItems * sizeof(int)*2;
 	if(NewSnapSize > CSnapshot::MAX_SIZE || NumItems > MAX_ITEMS || CompleteSize != SrcSize)
 		return false;
 
 	// check offsets
-	const int* pOffsets = pData + 2;
+	const int *pOffsets = pData+2;
 	int LastOffset = DataSize;
-	for(int i = NumItems - 1; i >= 0; i--)
+	for(int i = NumItems-1; i >= 0; i--)
 	{
 		int ItemSize = LastOffset - pOffsets[i];
 		LastOffset = pOffsets[i];
@@ -570,20 +570,19 @@ bool CSnapshotBuilder::UnserializeSnap(const char* pSrcData, int SrcSize)
 
 	m_DataSize = DataSize;
 	m_NumItems = NumItems;
-	mem_copy(m_aOffsets, pOffsets, sizeof(int) * m_NumItems);
-	mem_copy(m_aData, pOffsets + m_NumItems, m_DataSize);
+	mem_copy(m_aOffsets, pOffsets, sizeof(int)*m_NumItems);
+	mem_copy(m_aData, pOffsets+m_NumItems, m_DataSize);
 	return true;
 }
 
-CSnapshotItem* CSnapshotBuilder::GetItem(int Index)
+CSnapshotItem *CSnapshotBuilder::GetItem(int Index) const
 {
-	return (CSnapshotItem*)&(m_aData[m_aOffsets[Index]]);
+	return (CSnapshotItem *)&(m_aData[m_aOffsets[Index]]);
 }
 
-int* CSnapshotBuilder::GetItemData(int Key)
+int *CSnapshotBuilder::GetItemData(int Key) const
 {
-	int i;
-	for(i = 0; i < m_NumItems; i++)
+	for(int i = 0; i < m_NumItems; i++)
 	{
 		if(GetItem(i)->Key() == Key)
 			return GetItem(i)->Data();
@@ -591,12 +590,12 @@ int* CSnapshotBuilder::GetItemData(int Key)
 	return 0;
 }
 
-int CSnapshotBuilder::Finish(void* pSnapdata)
+int CSnapshotBuilder::Finish(void *pSnapdata)
 {
 	// flattern and make the snapshot
-	CSnapshot* pSnap = (CSnapshot*)pSnapdata;
-	int OffsetSize = sizeof(int) * m_NumItems;
-	int KeySize = sizeof(int) * m_NumItems;
+	CSnapshot *pSnap = (CSnapshot *)pSnapdata;
+	int OffsetSize = sizeof(int)*m_NumItems;
+	int KeySize = sizeof(int)*m_NumItems;
 	pSnap->m_DataSize = m_DataSize;
 	pSnap->m_NumItems = m_NumItems;
 
@@ -613,7 +612,7 @@ int CSnapshotBuilder::Finish(void* pSnapdata)
 	{
 		if(i < NumItems - 1)
 		{
-			aItemSizes[i] = m_aOffsets[i + 1] - m_aOffsets[i];
+			aItemSizes[i] = m_aOffsets[i+1] - m_aOffsets[i];
 		}
 		else
 		{
@@ -629,12 +628,12 @@ int CSnapshotBuilder::Finish(void* pSnapdata)
 
 		for(int i = 1; i < NumItems; i++)
 		{
-			if(pSnap->SortedKeys()[i - 1] > pSnap->SortedKeys()[i])
+			if(pSnap->SortedKeys()[i-1] > pSnap->SortedKeys()[i])
 			{
 				Sorting = true;
-				tl_swap(pSnap->SortedKeys()[i], pSnap->SortedKeys()[i - 1]);
-				tl_swap(m_aOffsets[i], m_aOffsets[i - 1]);
-				tl_swap(aItemSizes[i], aItemSizes[i - 1]);
+				std::swap(pSnap->SortedKeys()[i], pSnap->SortedKeys()[i-1]);
+				std::swap(m_aOffsets[i], m_aOffsets[i-1]);
+				std::swap(aItemSizes[i], aItemSizes[i-1]);
 			}
 		}
 	}
@@ -644,25 +643,25 @@ int CSnapshotBuilder::Finish(void* pSnapdata)
 	for(int i = 0; i < NumItems; i++)
 	{
 		pSnap->Offsets()[i] = OffsetCur;
-		mem_copy(pSnap->DataStart() + OffsetCur, m_aData + m_aOffsets[i], aItemSizes[i]);
+		mem_copy(pSnap->DataStart()+OffsetCur, m_aData + m_aOffsets[i], aItemSizes[i]);
 		OffsetCur += aItemSizes[i];
 	}
 
 	return sizeof(CSnapshot) + KeySize + OffsetSize + m_DataSize;
 }
 
-void* CSnapshotBuilder::NewItem(int Type, int ID, int Size)
+void *CSnapshotBuilder::NewItem(int Type, int ID, int Size)
 {
-	if(m_DataSize + sizeof(CSnapshot) + sizeof(CSnapshotItem) + Size + (m_NumItems + 1) * sizeof(int) * 2 >= CSnapshot::MAX_SIZE ||
-		m_NumItems + 1 >= MAX_ITEMS)
+	if(m_DataSize + sizeof(CSnapshot) + sizeof(CSnapshotItem) + Size + (m_NumItems+1) * sizeof(int)*2 >= CSnapshot::MAX_SIZE ||
+		m_NumItems+1 >= MAX_ITEMS)
 	{
 		// key and offset per item
-		dbg_assert(m_DataSize + sizeof(CSnapshot) + m_NumItems * sizeof(int) * 2 < CSnapshot::MAX_SIZE, "too much data");
+		dbg_assert(m_DataSize + sizeof(CSnapshot) + m_NumItems * sizeof(int)*2 < CSnapshot::MAX_SIZE, "too much data");
 		dbg_assert(m_NumItems < MAX_ITEMS, "too many items");
 		return 0;
 	}
 
-	CSnapshotItem* pObj = (CSnapshotItem*)(m_aData + m_DataSize);
+	CSnapshotItem *pObj = (CSnapshotItem *)(m_aData + m_DataSize);
 
 	mem_zero(pObj, sizeof(CSnapshotItem) + Size);
 	pObj->SetKey(Type, ID);

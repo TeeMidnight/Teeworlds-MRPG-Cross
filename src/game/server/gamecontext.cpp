@@ -782,9 +782,9 @@ void CGS::SendSkinChange(int ClientID, int TargetID)
 	Msg.m_ClientID = ClientID;
 	for(int p = 0; p < NUM_SKINPARTS; p++)
 	{
-		Msg.m_apSkinPartNames[p] = pPlayer->Acc().m_aaSkinPartNames[p];
-		Msg.m_aUseCustomColors[p] = pPlayer->Acc().m_aUseCustomColors[p];
-		Msg.m_aSkinPartColors[p] = pPlayer->Acc().m_aSkinPartColors[p];
+		Msg.m_apSkinPartNames[p] = pPlayer->Acc().m_Skin.m_aaSkinPartNames[p];
+		Msg.m_aUseCustomColors[p] = pPlayer->Acc().m_Skin.m_aUseCustomColors[p];
+		Msg.m_aSkinPartColors[p] = pPlayer->Acc().m_Skin.m_aSkinPartColors[p];
 	}
 	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NORECORD, TargetID);
 }
@@ -1282,9 +1282,9 @@ void CGS::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			for(int p = 0; p < NUM_SKINPARTS; p++)
 			{
-				str_utf8_copy_num(pPlayer->Acc().m_aaSkinPartNames[p], pMsg->m_apSkinPartNames[p], sizeof(pPlayer->Acc().m_aaSkinPartNames[p]), MAX_SKIN_LENGTH);
-				pPlayer->Acc().m_aUseCustomColors[p] = pMsg->m_aUseCustomColors[p];
-				pPlayer->Acc().m_aSkinPartColors[p] = pMsg->m_aSkinPartColors[p];
+				str_utf8_copy_num(pPlayer->Acc().m_Skin.m_aaSkinPartNames[p], pMsg->m_apSkinPartNames[p], sizeof(pPlayer->Acc().m_Skin.m_aaSkinPartNames[p]), MAX_SKIN_LENGTH);
+				pPlayer->Acc().m_Skin.m_aUseCustomColors[p] = pMsg->m_aUseCustomColors[p];
+				pPlayer->Acc().m_Skin.m_aSkinPartColors[p] = pMsg->m_aSkinPartColors[p];
 			}
 
 			// update all clients
@@ -1340,9 +1340,9 @@ void CGS::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			Server()->SetClientCountry(ClientID, pMsg->m_Country);
 			for(int p = 0; p < 6; p++)
 			{
-				str_utf8_copy_num(pPlayer->Acc().m_aaSkinPartNames[p], pMsg->m_apSkinPartNames[p], sizeof(pPlayer->Acc().m_aaSkinPartNames[p]), MAX_SKIN_LENGTH);
-				pPlayer->Acc().m_aUseCustomColors[p] = pMsg->m_aUseCustomColors[p];
-				pPlayer->Acc().m_aSkinPartColors[p] = pMsg->m_aSkinPartColors[p];
+				str_utf8_copy_num(pPlayer->Acc().m_Skin.m_aaSkinPartNames[p], pMsg->m_apSkinPartNames[p], sizeof(pPlayer->Acc().m_Skin.m_aaSkinPartNames[p]), MAX_SKIN_LENGTH);
+				pPlayer->Acc().m_Skin.m_aUseCustomColors[p] = pMsg->m_aUseCustomColors[p];
+				pPlayer->Acc().m_Skin.m_aSkinPartColors[p] = pMsg->m_aSkinPartColors[p];
 			}
 
 			// send vote options
@@ -1518,16 +1518,16 @@ void CGS::ConParseSkin(IConsole::IResult *pResult, void *pUserData)
 	if(pPlayer)
 	{
 		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "%s %s %s %s %s %s", pPlayer->Acc().m_aaSkinPartNames[0],
-			pPlayer->Acc().m_aaSkinPartNames[1], pPlayer->Acc().m_aaSkinPartNames[2],
-			pPlayer->Acc().m_aaSkinPartNames[3], pPlayer->Acc().m_aaSkinPartNames[4],
-			pPlayer->Acc().m_aaSkinPartNames[5]);
+		str_format(aBuf, sizeof(aBuf), "%s %s %s %s %s %s", pPlayer->Acc().m_Skin.m_aaSkinPartNames[0],
+			pPlayer->Acc().m_Skin.m_aaSkinPartNames[1], pPlayer->Acc().m_Skin.m_aaSkinPartNames[2],
+			pPlayer->Acc().m_Skin.m_aaSkinPartNames[3], pPlayer->Acc().m_Skin.m_aaSkinPartNames[4],
+			pPlayer->Acc().m_Skin.m_aaSkinPartNames[5]);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "parseskin", aBuf);
 
-		str_format(aBuf, sizeof(aBuf), "%d %d %d %d %d %d", pPlayer->Acc().m_aSkinPartColors[0],
-			pPlayer->Acc().m_aSkinPartColors[1], pPlayer->Acc().m_aSkinPartColors[2],
-			pPlayer->Acc().m_aSkinPartColors[3], pPlayer->Acc().m_aSkinPartColors[4],
-			pPlayer->Acc().m_aSkinPartColors[5]);
+		str_format(aBuf, sizeof(aBuf), "%d %d %d %d %d %d", pPlayer->Acc().m_Skin.m_aSkinPartColors[0],
+			pPlayer->Acc().m_Skin.m_aSkinPartColors[1], pPlayer->Acc().m_Skin.m_aSkinPartColors[2],
+			pPlayer->Acc().m_Skin.m_aSkinPartColors[3], pPlayer->Acc().m_Skin.m_aSkinPartColors[4],
+			pPlayer->Acc().m_Skin.m_aSkinPartColors[5]);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "parseskin", aBuf);
 	}
 }

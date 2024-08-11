@@ -843,9 +843,9 @@ void CPlayer::SendClientInfo(int TargetID)
 	ClientInfoMsg.m_Silent = (bool)(IsAuthed());
 	for (int p = 0; p < 6; p++)
 	{
-		ClientInfoMsg.m_apSkinPartNames[p] = Acc().m_aaSkinPartNames[p];
-		ClientInfoMsg.m_aUseCustomColors[p] = Acc().m_aUseCustomColors[p];
-		ClientInfoMsg.m_aSkinPartColors[p] = Acc().m_aSkinPartColors[p];
+		ClientInfoMsg.m_apSkinPartNames[p] = Acc().m_Skin.m_aaSkinPartNames[p];
+		ClientInfoMsg.m_aUseCustomColors[p] = Acc().m_Skin.m_aUseCustomColors[p];
+		ClientInfoMsg.m_aSkinPartColors[p] = Acc().m_Skin.m_aSkinPartColors[p];
 	}
 
 	// player data it static have accept it all worlds
