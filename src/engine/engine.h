@@ -36,6 +36,6 @@ public:
 	static void RunJobBlocking(IJob *pJob);
 };
 
-extern IEngine *CreateEngine(const char *pAppname);
+extern IEngine *CreateEngine(const char *pAppname, bool Silent, int Jobs);
 
 #endif
