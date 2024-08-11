@@ -868,18 +868,18 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 	// unpack msgid and system flag
 	CMsgUnpacker Unpacker(pPacket->m_pData, pPacket->m_DataSize);
 
-	int Msg = Unpacker.Type();
+	int MsgID = Unpacker.Type();
 	int System = Unpacker.System();
 
 	if(Unpacker.Error())
 		return;
 
-	if(!NetConverter()->PrevConvertClientMsg(&Unpacker, Msg, System, ClientID))
+	if(!NetConverter()->PrevConvertClientMsg(&Unpacker, MsgID, System, ClientID))
 	{
 		return;
 	}
 
-	if(Sys)
+	if(System)
 	{
 		// system message
 		if(MsgID == NETMSG_INFO)
