@@ -754,6 +754,42 @@ void CServer::SendMap(int ClientID)
 	SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
 }
 
+void CServer::SendMapData(int ClientID, int Chunk)
+{
+	const int WorldID = m_aClients[ClientID].m_WorldID;
+	const char* pWorldName = MultiWorlds()->GetWorld(WorldID)->m_aName;
+	IEngineMap* pMap = MultiWorlds()->GetWorld(WorldID)->m_pLoadedMap;
+
+	int ChunkSize = 1024 - 128;
+	int Offset = Chunk * ChunkSize;
+	int Last = 0;
+
+	// drop faulty map data requests
+	if(Chunk < 0 || Offset > pMap->GetCurrentMapSize())
+		return;
+
+	if(Offset + ChunkSize >= pMap->GetCurrentMapSize())
+	{
+		ChunkSize = pMap->GetCurrentMapSize() - Offset;
+		Last = 1;
+	}
+
+	CMsgPacker Msg(NETMSG_MAP_DATA, true);
+	Msg.AddInt(Last);
+	Msg.AddInt(pMap->Crc());
+	Msg.AddInt(Chunk);
+	Msg.AddInt(ChunkSize);
+	Msg.AddRaw(pMap->GetData(Offset), ChunkSize);
+	SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
+
+	if(g_Config.m_Debug)
+	{
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "sending chunk %d with size %d", Chunk, ChunkSize);
+		Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "server", aBuf);
+	}
+}
+
 void CServer::SendConnectionReady(int ClientID)
 {
 	CMsgPacker Msg(NETMSG_CON_READY, true);
@@ -877,6 +913,32 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				const int WorldID = m_aClients[ClientID].m_WorldID;
 				const int CurrentMapSize = MultiWorlds()->GetWorld(WorldID)->m_pLoadedMap->GetCurrentMapSize();
 				unsigned char* CurrentMapData = MultiWorlds()->GetWorld(WorldID)->m_pLoadedMap->GetCurrentMapData();
+				
+				if(ClientProtocol(ClientID) == NETPROTOCOL_SIX)
+				{
+					int Chunk = Unpacker.GetInt();
+					if(Unpacker.Error())
+					{
+						return;
+					}
+					if(Chunk != m_aClients[ClientID].m_MapChunk || !g_Config.m_SvFastDownload)
+					{
+						SendMapData(ClientID, Chunk);
+						return;
+					}
+
+					if(Chunk == 0)
+					{
+						for(int i = 0; i < g_Config.m_SvMapWindow; i++)
+						{
+							SendMapData(ClientID, i);
+						}
+					}
+					SendMapData(ClientID, g_Config.m_SvMapWindow + m_aClients[ClientID].m_MapChunk);
+					m_aClients[ClientID].m_MapChunk++;
+
+					return;
+				}
 
 				int ChunkSize = MAP_CHUNK_SIZE;
 				for(int i = 0; i < m_MapChunksPerRequest && m_aClients[ClientID].m_MapChunk >= 0; ++i)
