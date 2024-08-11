@@ -2087,7 +2087,7 @@ int main(int argc, const char **argv) // ignore_convention
 
 	// create the components
 	int FlagMask = CFGFLAG_SERVER|CFGFLAG_ECON;
-	IEngine *pEngine = CreateEngine("Teeworlds_Server");
+	IEngine *pEngine = CreateEngine("Teeworlds_Server", false, 1);
 	IConsole *pConsole = CreateConsole(CFGFLAG_SERVER|CFGFLAG_ECON);
 	IEngineMasterServer *pEngineMasterServer = CreateEngineMasterServer();
 	IStorageEngine *pStorage = CreateStorage("Teeworlds", IStorageEngine::STORAGETYPE_SERVER, argc, argv); // ignore_convention
