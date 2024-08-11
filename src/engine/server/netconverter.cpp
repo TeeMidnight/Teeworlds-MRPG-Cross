@@ -227,30 +227,13 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
             if(!pMessage || !pMessage[0])
                 return false;
 
-            if(pMessage[0] == '/')
-            {
-                CMsgPacker Msg7(NETMSGTYPE_CL_COMMAND, false, false);
-                const char *pCommandStr = pMessage;
+            CMsgPacker Msg7(NETMSGTYPE_CL_SAY, false, false);
+            Msg7.AddInt(Team ? CHAT_TEAM : CHAT_ALL);
+            Msg7.AddInt(-1);
+            Msg7.AddString(pMessage, -1);
 
-                char aCommand[16];
-	            str_format(aCommand, sizeof(aCommand), "%.*s", str_span(pCommandStr + 1, " "), pCommandStr + 1);
-
-                Msg7.AddString(aCommand, -1);
-                Msg7.AddString(str_skip_whitespaces_const(str_skip_to_whitespace_const(pCommandStr)), -1);
-
-                pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
-                Type = NETMSGTYPE_CL_COMMAND;
-            }
-            else
-            {
-                CMsgPacker Msg7(NETMSGTYPE_CL_SAY, false, false);
-                Msg7.AddInt(Team ? CHAT_TEAM : CHAT_ALL);
-                Msg7.AddInt(-1);
-                Msg7.AddString(pMessage, -1);
-
-                pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
-                Type = NETMSGTYPE_CL_SAY;
-            }
+            pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
+            Type = NETMSGTYPE_CL_SAY;
 
             return true;
         }
