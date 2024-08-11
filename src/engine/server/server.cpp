@@ -779,7 +779,7 @@ void CServer::SendMapData(int ClientID, int Chunk)
 	Msg.AddInt(pMap->Crc());
 	Msg.AddInt(Chunk);
 	Msg.AddInt(ChunkSize);
-	Msg.AddRaw(pMap->GetData(Offset), ChunkSize);
+	Msg.AddRaw(&pMap->GetCurrentMapData()[Offset], ChunkSize);
 	SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
 
 	if(g_Config.m_Debug)
