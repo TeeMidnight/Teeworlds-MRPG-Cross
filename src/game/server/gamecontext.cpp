@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "gamecontext.h"
 
+#include <engine/netconverter.h>
 #include <engine/storage.h>
 #include <engine/shared/config.h>
 
@@ -1287,6 +1288,9 @@ void CGS::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				pPlayer->Acc().m_Skin.m_aSkinPartColors[p] = pMsg->m_aSkinPartColors[p];
 			}
 
+			if(Server()->ClientProtocol(ClientID) == NETPROTOCOL_SEVEN)
+				pPlayer->Acc().m_Skin.FromSeven();
+
 			// update all clients
 			for(int i = 0; i < MAX_CLIENTS; ++i)
 			{
@@ -1344,6 +1348,8 @@ void CGS::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				pPlayer->Acc().m_Skin.m_aUseCustomColors[p] = pMsg->m_aUseCustomColors[p];
 				pPlayer->Acc().m_Skin.m_aSkinPartColors[p] = pMsg->m_aSkinPartColors[p];
 			}
+			if(Server()->ClientProtocol(ClientID) == NETPROTOCOL_SEVEN)
+				pPlayer->Acc().m_Skin.FromSeven();
 
 			// send vote options
 			CNetMsg_Sv_VoteClearOptions ClearMsg;

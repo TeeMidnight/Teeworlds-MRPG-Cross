@@ -10,6 +10,7 @@
 #include <game/server/gamecontroller.h>
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
+#include <game/server/playerbot.h>
 
 #include <generated/protocol.h>
 #include <generated/protocol6.h>
@@ -630,17 +631,43 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, int Type, int ID, int Size, in
             if(!GameServer()->m_apPlayers[ClientID])
                 return false;
 
-            CTeeInfo TeeInfos = GameServer()->m_apPlayers[ClientID]->Acc().m_Skin;
-
             if(!pClientInfo)
                 return false;
-            StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(ClientID));
-            StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(ClientID));
-            pClientInfo->m_Country = Server()->ClientCountry(ClientID);
-            StrToInts(&pClientInfo->m_Skin0, 6, TeeInfos.m_aSkinName);
-            pClientInfo->m_UseCustomColor = TeeInfos.m_UseCustomColor;
-            pClientInfo->m_ColorBody = TeeInfos.m_ColorBody;
-            pClientInfo->m_ColorFeet = TeeInfos.m_ColorFeet;
+
+            if(GameServer()->m_apPlayers[ClientID]->IsBot())
+            {
+                CPlayerBot *pBot = (CPlayerBot *) GameServer()->m_apPlayers[ClientID];
+                char aNickname[24];
+                pBot->GenerateNick(aNickname, sizeof(aNickname));
+                StrToInts(&pClientInfo->m_Name0, 4, aNickname);
+                StrToInts(&pClientInfo->m_Clan0, 3, "::Bots::");
+                pClientInfo->m_Country = -1;
+                CTeeInfo TeeInfos;
+                for (int p = 0; p < 6; p++)
+                {
+                    str_copy(TeeInfos.m_aaSkinPartNames[p], DataBotInfo::ms_aDataBot[pBot->GetBotID()].m_aaSkinNameBot[p], sizeof(TeeInfos.m_aaSkinPartNames[p]));
+                    TeeInfos.m_aUseCustomColors[p] = DataBotInfo::ms_aDataBot[pBot->GetBotID()].m_aUseCustomBot[p];
+                    TeeInfos.m_aSkinPartColors[p] = DataBotInfo::ms_aDataBot[pBot->GetBotID()].m_aSkinColorBot[p];
+                }
+                TeeInfos.FromSeven();
+
+                StrToInts(&pClientInfo->m_Skin0, 6, TeeInfos.m_aSkinName);
+                pClientInfo->m_UseCustomColor = TeeInfos.m_UseCustomColor;
+                pClientInfo->m_ColorBody = TeeInfos.m_ColorBody;
+                pClientInfo->m_ColorFeet = TeeInfos.m_ColorFeet;
+            }
+            else
+            {
+                CTeeInfo TeeInfos = GameServer()->m_apPlayers[ClientID]->Acc().m_Skin;
+
+                StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(ClientID));
+                StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(ClientID));
+                pClientInfo->m_Country = Server()->ClientCountry(ClientID);
+                StrToInts(&pClientInfo->m_Skin0, 6, TeeInfos.m_aSkinName);
+                pClientInfo->m_UseCustomColor = TeeInfos.m_UseCustomColor;
+                pClientInfo->m_ColorBody = TeeInfos.m_ColorBody;
+                pClientInfo->m_ColorFeet = TeeInfos.m_ColorFeet;
+            }
 
             CNetObj_PlayerInfo *pObj7 = (CNetObj_PlayerInfo *) pItem;
             protocol6::CNetObj_PlayerInfo *pObj6 = static_cast<protocol6::CNetObj_PlayerInfo *>(Server()->SnapNewItem(protocol6::NETOBJTYPE_PLAYERINFO, ID, sizeof(protocol6::CNetObj_PlayerInfo)));

@@ -16,6 +16,7 @@ class CPlayerBot : public CPlayer
 	int m_DungeonAllowedSpawn;
 	std::map<int, vec2> m_WayPoints;
 
+	friend class CNetConverter;
 public:
 	int m_LastPosTick;
 	int m_PathSize;
