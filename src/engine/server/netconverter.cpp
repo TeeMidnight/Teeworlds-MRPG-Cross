@@ -144,6 +144,8 @@ CNetConverter::CNetConverter(IServer *pServer, class CConfiguration *pConfig) :
     m_pConfig(pConfig)
 {
     m_GameFlags = 0;
+    ResetChatTick();
+    ResetEventID();
     ResetSnapItemsEx();
 }
 
@@ -640,7 +642,7 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, int Type, int ID, int Size, in
                 char aNickname[24];
                 pBot->GenerateNick(aNickname, sizeof(aNickname));
                 StrToInts(&pClientInfo->m_Name0, 4, aNickname);
-                StrToInts(&pClientInfo->m_Clan0, 3, "::Bots::");
+                StrToInts(&pClientInfo->m_Clan0, 3, "");
                 pClientInfo->m_Country = -1;
                 CTeeInfo TeeInfos;
                 for (int p = 0; p < 6; p++)
@@ -809,7 +811,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
             int Mode = Unpacker.GetInt(); // Mode
             int ChatterClientID = Unpacker.GetInt();
             int TargetID = Unpacker.GetInt();
-            const char* pMessage = Unpacker.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES);
+            const char* pMessage = Unpacker.GetString();
 
             int Team = 0;
             if(ChatterClientID != -1 && Mode == CHAT_WHISPER)
@@ -869,7 +871,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
                 Pos ++;
                 int Int = Unpacker.GetInt();
                 if(!Unpacker.Error())
-                    Msg6.AddInt(Pos == 30 ? 0 : Int); // faking no collision
+                    Msg6.AddInt(Pos >= 30 ? 0 : Int); // faking no collision and hook
                 if(Pos == 29)
                     Msg6.AddInt(g_pData->m_Weapons.m_aId[WEAPON_LASER].m_Damage);
             }while(Unpacker.Error());
