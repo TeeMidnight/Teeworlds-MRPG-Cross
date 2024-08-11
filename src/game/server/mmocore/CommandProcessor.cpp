@@ -325,11 +325,14 @@ void CCommandProcessor::ChatCmd(const char* pMessage, CPlayer* pPlayer)
 		break;
 	}
 
+	char aStringStorage[512];
+	str_copy(aStringStorage, pMessage, sizeof(aStringStorage));
+
 	const IConsole::CCommandInfo* pCommand = GS()->Console()->GetCommandInfo(aCommand, CFGFLAG_CHAT, false);
 	if(pCommand)
 	{
 		int ErrorArgs = 0;
-		GS()->Console()->ExecuteLineFlag(pMessage + 1, CFGFLAG_CHAT, ClientID, false, &ErrorArgs);
+		GS()->Console()->ExecuteLineFlag(aStringStorage + 1, CFGFLAG_CHAT, ClientID, false, &ErrorArgs);
 		if(ErrorArgs)
 		{
 			char aArgsDesc[256];
