@@ -55,7 +55,7 @@ public:
 	template<class T>
 	int SendPackMsgMask(T* pMsg, int Flags, int ClientID, int64 Mask, int WorldID = -1, bool Convert = true)
 	{
-		CMsgPacker Packer(pMsg->MsgID(), false);
+		CMsgPacker Packer(pMsg->MsgID(), false, Convert);
 		if(pMsg->Pack(&Packer))
 			return -1;
 		return SendMsg(&Packer, Flags, ClientID, Mask, WorldID);
