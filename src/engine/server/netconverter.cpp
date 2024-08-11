@@ -869,7 +869,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
                 Pos ++;
                 int Int = Unpacker.GetInt();
                 if(!Unpacker.Error())
-                    Msg6.AddInt(Int);
+                    Msg6.AddInt(Pos == 30 ? 0 : Int); // faking no collision
                 if(Pos == 29)
                     Msg6.AddInt(g_pData->m_Weapons.m_aId[WEAPON_LASER].m_Damage);
             }while(Unpacker.Error());
