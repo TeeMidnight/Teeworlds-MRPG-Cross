@@ -164,8 +164,8 @@ static void UndiffItem(const int *pPast, const int *pDiff, int *pOut, int Size, 
 			*pDataRate += 1;
 		else
 		{
-			unsigned char aBuf[CVariableInt::MAX_BYTES_PACKED];
-			unsigned char *pEnd = CVariableInt::Pack(aBuf, *pDiff, sizeof(aBuf));
+			unsigned char aBuf[16];
+			unsigned char *pEnd = CVariableInt::Pack(aBuf, *pDiff);
 			*pDataRate += (int)(pEnd - (unsigned char*)aBuf) * 8;
 		}
 
@@ -463,7 +463,7 @@ void CSnapshotStorage::Add(int Tick, int64 Tagtime, int DataSize, const void *pD
 	if(CreateAlt)
 		TotalSize += DataSize;
 
-	CHolder *pHolder = (CHolder *)mem_alloc(TotalSize);
+	CHolder *pHolder = (CHolder *)mem_alloc(TotalSize, 1);
 
 	// set data
 	pHolder->m_Tick = Tick;
