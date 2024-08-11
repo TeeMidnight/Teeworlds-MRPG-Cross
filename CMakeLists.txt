@@ -40,6 +40,7 @@ else()
 endif()
 
 set(AUTO_DEPENDENCIES_DEFAULT ON)
+option(CLIENT_COMPILE "Build the client" ON)
 option(SERVER_COMPILE "Build the server together with the client" ON)
 option(DISCORD_SERVER_COMPILE "Compile Sleepy-Discord in conjunction with the server" OFF)
 option(DOWNLOAD_GTEST "Download and compile GTest if not found" ${AUTO_DEPENDENCIES_DEFAULT})
@@ -61,7 +62,6 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS src/game/version.
 
 set(SERVER_EXECUTABLE mmoteeworlds_srv CACHE STRING "Name of the built server executable")
 set(CLIENT_EXECUTABLE mmoteeworlds CACHE STRING "Name of the build client executable")
-set(CLIENT_COMPILE ON)
 
 ########################################################################
 # Compiler flags
