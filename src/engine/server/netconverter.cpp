@@ -1151,7 +1151,7 @@ int CNetConverter::SendMsgConvert(CMsgPacker *pMsg, int Flags, int ToClientID, i
 
     if(ToClientID == -1)
     {
-        for(int i = 0 ; i < MAX_CLIENTS; i ++)
+        for(int i = 0 ; i < MAX_PLAYERS; i ++)
         {
             SendMsgConvert(pMsg, Flags, i, Depth + 1);
         }
@@ -1270,7 +1270,7 @@ int CNetConverter::SendSystemMsgConvert(CMsgPacker *pMsg, int Flags, int ToClien
 
     if(ToClientID == -1)
     {
-        for(int i = 0 ; i < MAX_CLIENTS; i ++)
+        for(int i = 0 ; i < MAX_PLAYERS; i ++)
         {
             SendSystemMsgConvert(pMsg, Flags, i, Depth + 1);
         }
