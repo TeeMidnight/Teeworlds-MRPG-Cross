@@ -49,8 +49,8 @@ public:
 			char aFilenameSent[128], aFilenameRecv[128];
 			str_format(aFilenameSent, sizeof(aFilenameSent), "dumps/%s_network_sent_%s.txt", pEngine->m_pAppname, aBuf);
 			str_format(aFilenameRecv, sizeof(aFilenameRecv), "dumps/%s_network_recv_%s.txt", pEngine->m_pAppname, aBuf);
-			pEngine->StartLogging(pEngine->m_pStorage->OpenFile(aFilenameSent, IOFLAG_WRITE, IStorage::TYPE_SAVE),
-									pEngine->m_pStorage->OpenFile(aFilenameRecv, IOFLAG_WRITE, IStorage::TYPE_SAVE));
+			pEngine->StartLogging(pEngine->m_pStorage->OpenFile(aFilenameSent, IOFLAG_WRITE, IStorageEngine::TYPE_SAVE),
+									pEngine->m_pStorage->OpenFile(aFilenameRecv, IOFLAG_WRITE, IStorageEngine::TYPE_SAVE));
 		}
 	}
 
@@ -101,7 +101,7 @@ public:
 		if (g_Config.m_Logfile[0])
 		{
 			char aBuf[32];
-			if(g_Config.m_LogfileTimestamp[0])
+			if(g_Config.m_LogfileTimestamp)
 				str_timestamp(aBuf, sizeof(aBuf));
 			else
 				aBuf[0] = 0;
