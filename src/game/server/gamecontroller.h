@@ -58,6 +58,8 @@ public:
 	void OnPlayerInfoChange(class CPlayer *pPlayer, int WorldID);
 	void OnReset();
 
+	int GameFlags() const { return m_GameFlags; }
+
 	virtual void CreateLogic(int Type, int Mode, vec2 Pos, int Health) = 0;
 
 	// general

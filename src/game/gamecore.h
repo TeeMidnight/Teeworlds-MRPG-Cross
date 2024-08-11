@@ -209,6 +209,7 @@ public:
 	int m_WorldID;
 
 	int m_Jumped;
+	int m_JumpCounter;
 
 	int m_Direction;
 	int m_Angle;
@@ -218,8 +219,8 @@ public:
 
 	void Init(CWorldCore *pWorld, CCollision *pCollision);
 	void Reset();
-	void Tick(bool UseInput, CTuningParams* TunningParams = NULL);
-	void Move(CTuningParams* TunningParams = NULL);
+	void Tick(bool UseInput, CTuningParams* TunningParams = nullptr);
+	void Move(CTuningParams* TunningParams = nullptr);
 
 	void AddDragVelocity();
 	void ResetDragVelocity();

@@ -368,10 +368,10 @@ void CBotCore::ConAddCharacterBot(int ClientID, const char* pCharacter)
 
 	// collect data from a player's skin
 	char SkinPart[256], SkinColor[256];
-	str_format(SkinPart, sizeof(SkinPart), "%s %s %s %s %s %s", pPlayer->Acc().m_aaSkinPartNames[0], pPlayer->Acc().m_aaSkinPartNames[1],
-		pPlayer->Acc().m_aaSkinPartNames[2], pPlayer->Acc().m_aaSkinPartNames[3], pPlayer->Acc().m_aaSkinPartNames[4], pPlayer->Acc().m_aaSkinPartNames[5]);
-	str_format(SkinColor, sizeof(SkinColor), "%d %d %d %d %d %d", pPlayer->Acc().m_aSkinPartColors[0], pPlayer->Acc().m_aSkinPartColors[1],
-		pPlayer->Acc().m_aSkinPartColors[2], pPlayer->Acc().m_aSkinPartColors[3], pPlayer->Acc().m_aSkinPartColors[4], pPlayer->Acc().m_aSkinPartColors[5]);
+	str_format(SkinPart, sizeof(SkinPart), "%s %s %s %s %s %s", pPlayer->Acc().m_Skin.m_aaSkinPartNames[0], pPlayer->Acc().m_Skin.m_aaSkinPartNames[1],
+		pPlayer->Acc().m_Skin.m_aaSkinPartNames[2], pPlayer->Acc().m_Skin.m_aaSkinPartNames[3], pPlayer->Acc().m_Skin.m_aaSkinPartNames[4], pPlayer->Acc().m_Skin.m_aaSkinPartNames[5]);
+	str_format(SkinColor, sizeof(SkinColor), "%d %d %d %d %d %d", pPlayer->Acc().m_Skin.m_aSkinPartColors[0], pPlayer->Acc().m_Skin.m_aSkinPartColors[1],
+		pPlayer->Acc().m_Skin.m_aSkinPartColors[2], pPlayer->Acc().m_Skin.m_aSkinPartColors[3], pPlayer->Acc().m_Skin.m_aSkinPartColors[4], pPlayer->Acc().m_Skin.m_aSkinPartColors[5]);
 
 	// check the nick
 	CSqlString<16> cNick = CSqlString<16>(pCharacter);

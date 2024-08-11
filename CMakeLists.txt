@@ -41,7 +41,7 @@ endif()
 
 set(AUTO_DEPENDENCIES_DEFAULT ON)
 option(SERVER_COMPILE "Build the server together with the client" ON)
-option(DISCORD_SERVER_COMPILE "Compile Sleepy-Discord in conjunction with the server" ON)
+option(DISCORD_SERVER_COMPILE "Compile Sleepy-Discord in conjunction with the server" OFF)
 option(DOWNLOAD_GTEST "Download and compile GTest if not found" ${AUTO_DEPENDENCIES_DEFAULT})
 option(PREFER_BUNDLED_LIBS "Prefer bundled libraries over system libraries" ${AUTO_DEPENDENCIES_DEFAULT})
 option(DEV "Don't generate stuff necessary for packaging" OFF)
@@ -478,6 +478,37 @@ function(generate_source output_file script_parameter)
   )
 endfunction()
 
+function(generate_source6 output_file script_parameter)
+  add_custom_command(OUTPUT ${output_file}
+    COMMAND ${Python3_EXECUTABLE} -m datasrc.cross.compile ${script_parameter}
+      > "${PROJECT_BINARY_DIR}/${output_file}"
+    DEPENDS
+      datasrc/cross/compile.py
+      datasrc/cross/content.py
+      datasrc/cross/datatypes.py
+      datasrc/cross/network.py
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  )
+endfunction()
+
+function(generate_maps output_file script_parameter)
+  add_custom_command(OUTPUT ${output_file}
+    COMMAND ${Python3_EXECUTABLE} datasrc/crosscompile.py ${script_parameter}
+      > "${PROJECT_BINARY_DIR}/${output_file}"
+    DEPENDS
+      datasrc/crosscompile.py
+      datasrc/compile.py
+      datasrc/content.py
+      datasrc/datatypes.py
+      datasrc/network.py
+      datasrc/cross/compile.py
+      datasrc/cross/content.py
+      datasrc/cross/datatypes.py
+      datasrc/cross/network.py
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  )
+endfunction()
+
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/generated/")
 if(GIT_FOUND)
   execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --git-dir
@@ -515,6 +546,13 @@ generate_source("src/generated/protocol.h" "network_header")
 generate_source("src/generated/server_data.cpp" "server_content_source")
 generate_source("src/generated/server_data.h" "server_content_header")
 
+generate_source6("src/generated/protocol6.cpp" "network_source")
+generate_source6("src/generated/protocol6.h" "network_header")
+generate_source6("src/generated/client_data6.cpp" "client_content_source")
+generate_source6("src/generated/client_data6.h" "client_content_header")
+
+generate_maps("src/generated/protocolglue.h" "map_header")
+generate_maps("src/generated/protocolglue.cpp" "map_source")
 
 ########################################################################
 # SHARED
@@ -561,6 +599,7 @@ set_src(ENGINE_INTERFACE GLOB src/engine
   map.h
   masterserver.h
   message.h
+  netconverter.h
   serverbrowser.h
   sound.h
   storage.h
@@ -614,19 +653,32 @@ set_src(ENGINE_SHARED GLOB src/engine/shared
   packer.cpp
   packer.h
   protocol.h
+  protocol6.h
   ringbuffer.cpp
   ringbuffer.h
   snapshot.cpp
   snapshot.h
   storage.cpp
+  uuid.cpp 
+  uuid.h
 )
-set(ENGINE_GENERATED_SHARED src/generated/nethash.cpp src/generated/protocol.cpp src/generated/protocol.h)
+set(ENGINE_GENERATED_SHARED  
+  src/generated/nethash.cpp
+  src/generated/protocolglue.cpp
+  src/generated/protocolglue.h
+  src/generated/protocol6.cpp
+  src/generated/protocol6.h
+  src/generated/protocol.cpp
+  src/generated/protocol.h
+)
 file(GLOB GAME_SHARED "src/game/*.cpp" "src/game/*.h")
 
 set(GAME_GENERATED_SHARED
   src/generated/git_revision.cpp
   src/generated/nethash.cpp
   src/generated/protocol.h
+  src/generated/protocol6.h
+  src/generated/protocolglue.h
 )
 
 # Libraries & Deps

@@ -68,6 +68,8 @@ protected:
 	void HandleEvents();
 
 public:
+	CCharacterCore *Core() { return &m_Core; }
+	WeaponStat *WeaponStat(int Weapon) { return &m_aWeapons[Weapon]; }
 	//character's size
 	static const int ms_PhysSize = 28;
 	CCharacter(CGameWorld *pWorld);

@@ -44,6 +44,8 @@ public:
 	int GetIntOrDefault(int Default);
 	const char *GetString(int SanitizeType = SANITIZE);
 	const unsigned char *GetRaw(int Size);
+
+	int Size() const { return m_pCurrent - m_pStart; }
 	bool Error() const { return m_Error; }
 };
 

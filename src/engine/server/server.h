@@ -12,9 +12,11 @@ class CServer : public IServer
 	class CDataMMO* m_pDataMmo;
 	class CServerBan* m_pServerBan;
 	class DiscordJob* m_pDiscord;
+	class INetConverter *m_pNetConverter;
 
 public:
 	virtual class IGameServer* GameServer(int WorldID = 0);
+	class INetConverter *NetConverter() { return m_pNetConverter; }
 	class IConsole *Console() const { return m_pConsole; }
 	class IStorageEngine*Storage() const { return m_pStorage; }
 	class CMultiWorlds* MultiWorlds() const { return m_pMultiWorlds; }
@@ -83,6 +85,7 @@ public:
 		const IConsole::CCommandInfo *m_pRconCmdToSend;
 
 		int m_ClientVersion;
+		int m_Protocol;
 		void Reset();
 	};
 
@@ -175,13 +178,14 @@ public:
 	const char *ClientName(int ClientID) const override;
 	const char *ClientClan(int ClientID) const override;
 	int ClientCountry(int ClientID) const override;
+	int ClientProtocol(int ClientID) const override;
 	bool ClientIngame(int ClientID) const override;
 
 	virtual int SendMsg(CMsgPacker* pMsg, int Flags, int ClientID, int64 Mask = -1, int WorldID = -1);
 
 	void DoSnapshot(int WorldID);
 
-	static int NewClientCallback(int ClientID, void *pUser);
+	static int NewClientCallback(int ClientID, void *pUser, int Protocol);
 	static int DelClientCallback(int ClientID, const char *pReason, void *pUser);
 
 	void SendMap(int ClientID);
@@ -197,6 +201,7 @@ public:
 
 	void SendServerInfo(int ClientID);
 	void GenerateServerInfo(CPacker *pPacker, int Token);
+	void GenerateServerInfo6(CPacker *pPacker, int Token, int Type, NETADDR Addr);
 
 	void PumpNetwork();
 
@@ -225,6 +230,7 @@ public:
 	virtual int SnapNewID();
 	virtual void SnapFreeID(int ID);
 	virtual void *SnapNewItem(int Type, int ID, int Size);
+	virtual void *GetSnapItemData(int Type, int ID);
 	void SnapSetStaticsize(int ItemType, int Size);
 };
 

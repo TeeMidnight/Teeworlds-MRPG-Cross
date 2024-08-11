@@ -45,6 +45,7 @@ public:
 	virtual const char *ClientName(int ClientID) const = 0;
 	virtual const char *ClientClan(int ClientID) const = 0;
 	virtual int ClientCountry(int ClientID) const = 0;
+	virtual int ClientProtocol(int ClientID) const = 0;
 	virtual bool ClientIngame(int ClientID) const = 0;
 	virtual int GetClientInfo(int ClientID, CClientInfo *pInfo) const = 0;
 	virtual void GetClientAddr(int ClientID, char* pAddrStr, int Size) const = 0;
@@ -52,7 +53,7 @@ public:
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID, int64 Mask = -1, int WorldID = -1) = 0;
 
 	template<class T>
-	int SendPackMsgMask(T* pMsg, int Flags, int ClientID, int64 Mask, int WorldID = -1)
+	int SendPackMsgMask(T* pMsg, int Flags, int ClientID, int64 Mask, int WorldID = -1, bool Convert = true)
 	{
 		CMsgPacker Packer(pMsg->MsgID(), false);
 		if(pMsg->Pack(&Packer))
@@ -61,9 +62,9 @@ public:
 	}
 
 	template<class T>
-	int SendPackMsg(T* pMsg, int Flags, int ClientID, int WorldID = -1)
+	int SendPackMsg(T* pMsg, int Flags, int ClientID, int WorldID = -1, bool Convert = true)
 	{
-		CMsgPacker Packer(pMsg->MsgID(), false);
+		CMsgPacker Packer(pMsg->MsgID(), false, Convert);
 		if(pMsg->Pack(&Packer))
 			return -1;
 
@@ -125,6 +126,7 @@ public:
 	virtual int SnapNewID() = 0;
 	virtual void SnapFreeID(int ID) = 0;
 	virtual void *SnapNewItem(int Type, int ID, int Size) = 0;
+	virtual void *GetSnapItemData(int Type, int ID) = 0;
 	virtual void SnapSetStaticsize(int ItemType, int Size) = 0;
 
 	enum
