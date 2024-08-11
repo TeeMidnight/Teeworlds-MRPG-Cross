@@ -866,13 +866,18 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		return;
 
 	// unpack msgid and system flag
-	CUnpacker Unpacker;
-	Unpacker.Reset(pPacket->m_pData, pPacket->m_DataSize);
-	int MsgID = Unpacker.GetInt();
-	int Sys = MsgID&1;
-	MsgID >>= 1;
+	CMsgUnpacker Unpacker(pPacket->m_pData, pPacket->m_DataSize);
+
+	int Msg = Unpacker.Type();
+	int System = Unpacker.System();
+
 	if(Unpacker.Error())
 		return;
+
+	if(!NetConverter()->PrevConvertClientMsg(&Unpacker, Msg, System, ClientID))
+	{
+		return;
+	}
 
 	if(Sys)
 	{
@@ -882,7 +887,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && m_aClients[ClientID].m_State == CClient::STATE_AUTH)
 			{
 				const char *pVersion = Unpacker.GetString(CUnpacker::SANITIZE_CC);
-				if(str_comp(pVersion, "0.7 802f1be60a05665f") != 0 && str_comp(pVersion, GameServer()->NetVersion()) != 0)
+				if(str_comp(pVersion, "0.7 802f1be60a05665f") != 0 && str_comp(pVersion, "0.6 626fce9a778df4d4") != 0 && str_comp(pVersion, GameServer()->NetVersion()) != 0)
 				{
 					// wrong version
 					char aReason[256];
@@ -1794,6 +1799,8 @@ int CServer::Run()
 
 					if(m_HeavyReload)
 					{
+						// reset snap items ex
+						NetConverter()->ResetSnapItemsEx();
 						// reload players
 						for(int ClientID = 0; ClientID < MAX_PLAYERS; ClientID++)
 						{
@@ -2093,6 +2100,7 @@ int main(int argc, const char **argv) // ignore_convention
 	IStorageEngine *pStorage = CreateStorage("Teeworlds", IStorageEngine::STORAGETYPE_SERVER, argc, argv); // ignore_convention
 	IConfig *pConfig = CreateConfig();
 	INetConverter *pNetConverter = CreateNetConverter(pServer, &g_Config);
+	pNetConverter->ResetSnapItemsEx();
 
 	pServer->InitRegister(&pServer->m_NetServer, pEngineMasterServer, pConsole);
 
