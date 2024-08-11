@@ -235,8 +235,8 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
                 char aCommand[16];
 	            str_format(aCommand, sizeof(aCommand), "%.*s", str_span(pCommandStr + 1, " "), pCommandStr + 1);
 
-                Msg7.AddString(aCommand, -1);
-                Msg7.AddString(str_skip_whitespaces_const(str_skip_to_whitespace_const(pCommandStr)), -1);
+                Msg7.AddString(aCommand, 0);
+                Msg7.AddString(str_skip_whitespaces_const(str_skip_to_whitespace_const(pCommandStr)), 0);
 
                 pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
                 Type = NETMSGTYPE_CL_COMMAND;
@@ -246,7 +246,7 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
                 CMsgPacker Msg7(NETMSGTYPE_CL_SAY, false, false);
                 Msg7.AddInt(Team ? CHAT_TEAM : CHAT_ALL);
                 Msg7.AddInt(-1);
-                Msg7.AddString(pMessage, -1);
+                Msg7.AddString(pMessage, 0);
 
                 pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
                 Type = NETMSGTYPE_CL_SAY;
@@ -285,9 +285,9 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
         {
             CMsgPacker Msg7(NETMSGTYPE_CL_STARTINFO, false, false);
             // name
-            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1);
+            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), 0);
             // clan
-            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1);
+            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), 0);
             // country
             Msg7.AddInt(pItem->GetInt());
 
@@ -401,9 +401,9 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
         case protocol6::NETMSGTYPE_CL_CALLVOTE:
         {
             CMsgPacker Msg7(NETMSGTYPE_CL_CALLVOTE, false, false);
-            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1); // Type
-            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1); // Value
-            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1); // Reason
+            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), 0); // Type
+            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), 0); // Value
+            Msg7.AddString(pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), 0); // Reason
             Msg7.AddInt(0); // Force
 
             pItem->ResetUnpack(Msg7.Data(), Msg7.Size());
@@ -809,7 +809,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
                 // 3 = recv, 2 = send
                 Msg6.AddInt(TargetID == ToClientID ? 3 : 2); // Team
                 Msg6.AddInt(TargetID == ToClientID ? ChatterClientID : TargetID);
-                Msg6.AddString(aChat, -1);
+                Msg6.AddString(aChat, 0);
             }
             else
             {
@@ -817,7 +817,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
                     Team = 1;
                 Msg6.AddInt(Team);
                 Msg6.AddInt(ChatterClientID);
-                Msg6.AddString(pMessage, -1);
+                Msg6.AddString(pMessage, 0);
             }
 
             return Server()->SendMsg(&Msg6, Flags, ToClientID);
@@ -940,8 +940,8 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
             CMsgPacker Msg6(protocol6::NETMSGTYPE_SV_VOTESET, false, false);
             
             Msg6.AddInt(Timeout); // Timeout
-            Msg6.AddString(pDesc, -1); // Desc
-            Msg6.AddString(pReason, -1); // Reason
+            Msg6.AddString(pDesc, 0); // Desc
+            Msg6.AddString(pReason, 0); // Reason
 
             return Server()->SendMsg(&Msg6, Flags, ToClientID);
         }
@@ -1211,7 +1211,7 @@ int CNetConverter::DeepSystemMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClie
         case NETMSG_MAP_CHANGE:
         {
             CMsgPacker Msg6(protocol6::NETMSG_MAP_CHANGE, true, false);
-            Msg6.AddString(Unpacker.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), -1); // Map name
+            Msg6.AddString(Unpacker.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), 0); // Map name
             Msg6.AddInt(Unpacker.GetInt()); // Crc
             Msg6.AddInt(Unpacker.GetInt()); // Size
 
