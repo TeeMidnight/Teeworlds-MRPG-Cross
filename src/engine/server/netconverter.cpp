@@ -222,7 +222,7 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
         case protocol6::NETMSGTYPE_CL_SAY:
         {
             int Team = pItem->GetInt();
-            const char* pMessage = pItem->GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES);
+            const char* pMessage = pItem->GetString();
 
             if(!pMessage || !pMessage[0])
                 return false;
