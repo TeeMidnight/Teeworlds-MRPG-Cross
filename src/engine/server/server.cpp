@@ -1630,7 +1630,7 @@ bool CServer::LoadMap(int ID)
 
 void CServer::InitRegister(CNetServer *pNetServer, IEngineMasterServer *pMasterServer, IConsole *pConsole)
 {
-	m_Register.Init(REGISTERTYPE_SEVEN, pNetServer, pMasterServer, &g_Config, pConsole);
+	m_Register.Init(pNetServer, pMasterServer, &g_Config, pConsole);
 }
 
 int CServer::Run()

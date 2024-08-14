@@ -5,14 +5,6 @@
 
 #include <engine/shared/network.h>
 
-enum
-{
-	REGISTERTYPE_SEVEN=0,
-	REGISTERTYPE_SIX=1,
-
-	NUM_REGISTERTYPES,
-};
-
 class CRegister
 {
 	enum
@@ -35,19 +27,16 @@ class CRegister
 
 	class CNetServer *m_pNetServer;
 	class IEngineMasterServer *m_pMasterServer;
-	class CConfiguration *m_pConfig;
+	class CConfig *m_pConfig;
 	class IConsole *m_pConsole;
 
 	int m_RegisterState;
 	int64 m_RegisterStateStart;
 	int m_RegisterFirst;
 	int m_RegisterCount;
-	int m_RegisterProtocol;
 
 	CMasterserverInfo m_aMasterserverInfo[IMasterServer::MAX_MASTERSERVERS];
 	int m_RegisterRegisteredServer;
-	
-	const char* RegisterName();
 
 	void RegisterNewState(int State);
 	void RegisterSendFwcheckresponse(NETADDR *pAddr, TOKEN Token);
@@ -57,7 +46,7 @@ class CRegister
 
 public:
 	CRegister();
-	void Init(int ProtocolType, class CNetServer *pNetServer, class IEngineMasterServer *pMasterServer, class CConfiguration *pConfig, class IConsole *pConsole);
+	void Init(class CNetServer *pNetServer, class IEngineMasterServer *pMasterServer, class CConfiguration *pConfig, class IConsole *pConsole);
 	void RegisterUpdate(int Nettype);
 	int RegisterProcessPacket(struct CNetChunk *pPacket, TOKEN Token);
 };
