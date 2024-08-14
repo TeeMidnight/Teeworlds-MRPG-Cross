@@ -27,7 +27,7 @@ class CRegister
 
 	class CNetServer *m_pNetServer;
 	class IEngineMasterServer *m_pMasterServer;
-	class CConfig *m_pConfig;
+	class CConfiguration *m_pConfig;
 	class IConsole *m_pConsole;
 
 	int m_RegisterState;
