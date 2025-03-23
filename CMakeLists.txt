@@ -294,6 +294,7 @@ if(TARGET_OS AND TARGET_OS STREQUAL "mac")
 #  show_dependency_status("Hdiutil" HDIUTIL TRUE)
   message(FATAL_ERROR "The project does not support the MacOS build, due to the lack of equipment for tests.")
 endif()
+show_dependency_status("Curl" CURL TRUE)
 
 if(SERVER_COMPILE)
   show_dependency_status("MySQL" MYSQL TRUE)
@@ -575,8 +576,9 @@ set_src(BASE GLOB_RECURSE src/base
   hash.h
   hash_bundled.c
   hash_ctxt.h
-  hash_libtomcrypt.c
-  hash_openssl.c
+  hash_libtomcrypt.cpp
+  hash_openssl.cpp
+  lock.h
   math.h
   system.c
   system.h
@@ -589,6 +591,8 @@ set_src(BASE GLOB_RECURSE src/base
   tl/string.h
   tl/threading.h
   threadpool.h
+  uuid.cpp
+  uuid.h
   vmath.h
 )
 set_src(ENGINE_INTERFACE GLOB src/engine
@@ -602,10 +606,10 @@ set_src(ENGINE_INTERFACE GLOB src/engine
   engine.h
   graphics.h
   input.h
+  http.h
   kernel.h
   keys.h
   map.h
-  masterserver.h
   message.h
   netconverter.h
   serverbrowser.h
@@ -631,6 +635,8 @@ set_src(ENGINE_SHARED GLOB src/engine/shared
   engine.cpp
   filecollection.cpp
   filecollection.h
+  http.cpp
+  http.h
   huffman.cpp
   huffman.h
   jobs.cpp
@@ -691,7 +697,15 @@ set(GAME_GENERATED_SHARED
 
 # Libraries & Deps
 set(DEPS ${DEP_JSON} ${DEP_MD5} ${ZLIB_DEP})
-set(LIBS ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARY} ${PLATFORM_LIBS})
+
+# Libraries
+set(LIBS 
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${ZLIB_LIBRARIES}
+  ${OPENSSL_CRYPTO_LIBRARY} 
+  ${CURL_LIBRARIES}
+  ${PLATFORM_LIBS}
+)
 
 # Targets
 add_library(engine-shared EXCLUDE_FROM_ALL OBJECT ${ENGINE_INTERFACE} ${ENGINE_SHARED} ${ENGINE_GENERATED_SHARED} ${BASE} )

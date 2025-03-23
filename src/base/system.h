@@ -1231,6 +1231,26 @@ const char *str_find_nocase(const char *haystack, const char *needle);
 const char *str_find(const char *haystack, const char *needle);
 
 /*
+	Function: str_hex_decode
+		Takes a hex string *without spaces between bytes* and returns a
+		byte array.
+
+	Parameters:
+		dst - Buffer for the byte array
+		dst_size - size of the buffer
+		data - String to decode
+
+	Returns:
+		2 - String doesn't exactly fit the buffer
+		1 - Invalid character in string
+		0 - Success
+
+	Remarks:
+		- The contents of the buffer is only valid on success
+*/
+int str_hex_decode(void *dst, int dst_size, const char *src);
+
+/*
 	Function: str_hex
 		Takes a datablock and generates a hexstring of it.
 
@@ -1306,6 +1326,23 @@ void fs_listdir(const char *dir, FS_LISTDIR_CALLBACK cb, int type, void *user);
 
 typedef int (*FS_LISTDIR_INFO_CALLBACK)(const char* name, time_t date, int is_dir, int dir_type, void* user);
 int fs_listdir_info(const char* dir, FS_LISTDIR_INFO_CALLBACK cb, int type, void* user);
+
+/*
+	Function: fs_file_time
+		Gets the creation and the last modification date of a file.
+
+	Parameters:
+		name - The filename.
+		created - Pointer to time_t
+		modified - Pointer to time_t
+
+	Returns:
+		0 on success non-zero on failure
+
+	Remarks:
+		- Returned time is in seconds since UNIX Epoch
+*/
+int fs_file_time(const char *name, time_t *created, time_t *modified);
 
 /*
 	Function: fs_makedir
@@ -1522,6 +1559,23 @@ enum
 };
 
 int str_utf8_isstart(char c);
+/*
+	Function: str_next_token
+		Writes the next token after str into buf, returns the rest of the string.
+
+	Parameters:
+		str - Pointer to string.
+		delim - Delimiter for tokenization.
+		buffer - Buffer to store token in.
+		buffer_size - Size of the buffer.
+
+	Returns:
+		Pointer to rest of the string.
+
+	Remarks:
+		- The token is always null-terminated.
+*/
+const char *str_next_token(const char *str, const char *delim, char *buffer, int buffer_size);
 
 /*
 	Function: str_utf8_is_whitespace

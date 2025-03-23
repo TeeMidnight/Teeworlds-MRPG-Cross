@@ -278,6 +278,8 @@ private:
 	bool m_AllowedPVP;
 	DayType m_DayType;
 	static int m_MultiplierExp;
+
+	void OnUpdatePlayerServerInfo(class CJsonStringWriter *pJSonWriter, int Id) override;
 };
 
 inline int64 CmaskAll() { return -1; }

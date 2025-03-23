@@ -3,6 +3,59 @@
 #ifndef ENGINE_SERVER_SERVER_H
 #define ENGINE_SERVER_SERVER_H
 #include <engine/server.h>
+#include <engine/shared/http.h>
+#include <engine/shared/memheap.h>
+
+class CSnapIDPool
+{
+	enum
+	{
+		MAX_IDS = 16 * 1024,
+	};
+
+	class CID
+	{
+	public:
+		short m_Next;
+		short m_State; // 0 = free, 1 = allocated, 2 = timed
+		int m_Timeout;
+	};
+
+	CID m_aIDs[MAX_IDS];
+
+	int m_FirstFree;
+	int m_FirstTimed;
+	int m_LastTimed;
+	int m_Usage;
+	int m_InUsage;
+
+public:
+	CSnapIDPool();
+
+	void Reset();
+	void RemoveFirstTimeout();
+	int NewID();
+	void TimeoutIDs();
+	void FreeID(int ID);
+};
+
+class CServerBan : public CNetBan
+{
+	class CServer *m_pServer;
+
+	template<class T>
+	int BanExt(T *pBanPool, const typename T::CDataType *pData, int Seconds, const char *pReason);
+
+public:
+	class CServer *Server() const { return m_pServer; }
+
+	void InitServerBan(class IConsole *pConsole, class IStorage *pStorage, class CServer *pServer);
+
+	int BanAddr(const NETADDR *pAddr, int Seconds, const char *pReason) override;
+	int BanRange(const CNetRange *pRange, int Seconds, const char *pReason) override;
+
+	static void ConBanExt(class IConsole::IResult *pResult, void *pUser);
+};
 
 class CServer : public IServer
 {
@@ -13,6 +66,7 @@ class CServer : public IServer
 	class CServerBan* m_pServerBan;
 	class DiscordJob* m_pDiscord;
 	class INetConverter *m_pNetConverter;
+	class IRegister *m_pRegister;
 
 public:
 	virtual class IGameServer* GameServer(int WorldID = 0);
@@ -86,6 +140,11 @@ public:
 
 		int m_ClientVersion;
 		int m_Protocol;
+		bool IncludedInServerInfo() const
+		{
+			return m_State != STATE_EMPTY;
+		}
+
 		void Reset();
 	};
 
@@ -95,6 +154,8 @@ public:
 	CSnapIDPool m_IDPool;
 	CNetServer m_NetServer;
 	CEcon m_Econ;
+	CServerBan m_ServerBan;
+	CHttp m_Http;
 
 	int64 m_GameStartTime;
 	int m_RunServer;
@@ -114,8 +175,8 @@ public:
 	int m_RconPasswordSet;
 	int m_GeneratedRconPassword;
 
-	CRegister m_Register;
 	CMapChecker m_MapChecker;
+	bool m_ServerInfoNeedsUpdate;
 
 	CServer();
 	~CServer();
@@ -200,7 +261,11 @@ public:
 
 	void ProcessClientPacket(CNetChunk *pPacket);
 
-	void SendServerInfo(int ClientID) override;
+	void ExpireServerInfo() override;
+	void UpdateRegisterServerInfo();
+	void UpdateServerInfo(bool Resend = false);
+
+	void SendServerInfo(int ClientID);
 	void GenerateServerInfo(CPacker *pPacker, int Token);
 	void GenerateServerInfo6(CPacker *pPacker, int Token, int Type, NETADDR Addr);
 
@@ -208,7 +273,7 @@ public:
 
 	bool LoadMap(int ID);
 
-	void InitRegister(CNetServer *pNetServer, IEngineMasterServer *pMasterServer, IConsole *pConsole);
+	void InitInterfaces(IKernel *pKernel);
 	int Run();
 
 	static void ConKick(IConsole::IResult *pResult, void *pUser);
