@@ -35,6 +35,8 @@ public:
 	virtual bool RemoveBinaryFile(const char *pFilename) = 0;
 	virtual bool RenameBinaryFile(const char* pOldFilename, const char* pNewFilename) = 0;
 	virtual const char* GetBinaryPath(const char *pDir, char *pBuffer, unsigned BufferSize) = 0;
+	virtual bool GetFileTime(const char *pFilename, int StorageType, time_t *pCreated, time_t *pModified) = 0;
+	static const char *FormatTmpPath(char *aBuf, unsigned BufSize, const char *pPath);
 };
 
 IStorageEngine *CreateStorage(const char *pApplicationName, int StorageType, int NumArgs, const char **ppArguments);

@@ -48,8 +48,8 @@ int CNetTokenManager::ProcessMessage(const NETADDR *pAddr, const CNetPacketConst
 	bool TokenMessage = (pPacket->m_Flags & NET_PACKETFLAG_CONTROL)
 		&& pPacket->m_aChunkData[0] == NET_CTRLMSG_TOKEN;
 
-	if(pPacket->m_Flags&NET_PACKETFLAG_CONNLESS)
-		return (Verified && !BroadcastResponse) ? 1 : 0; // connless packets without token are not allowed
+	if(pPacket->m_Flags & NET_PACKETFLAG_CONNLESS)
+		return Verified ? 1 : 0; // connless packets without token are not allowed
 
 	if(!TokenMessage)
 	{

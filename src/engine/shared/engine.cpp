@@ -7,22 +7,7 @@
 #include <engine/storage.h>
 #include <engine/shared/config.h>
 #include <engine/shared/network.h>
-
-CHostLookup::CHostLookup()
-{
-}
-
-CHostLookup::CHostLookup(const char *pHostname, int Nettype)
-{
-	str_copy(m_aHostname, pHostname, sizeof(m_aHostname));
-	m_Nettype = Nettype;
-}
-
-
-void CHostLookup::Run()
-{
-	m_Result = net_host_lookup(m_aHostname, &m_Addr, m_Nettype);
-}
+#include <memory>
 
 class CEngine : public IEngine
 {
@@ -161,7 +146,7 @@ public:
 
 	void AddJob(std::shared_ptr<IJob> pJob)
 	{
-		if (g_Config.m_Debug)
+		if(g_Config.m_Debug)
 			dbg_msg("engine", "job added");
 		m_JobPool.Add(std::move(pJob));
 	}

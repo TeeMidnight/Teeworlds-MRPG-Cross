@@ -3,6 +3,10 @@
 #include "gamecontext.h"
 
 #include <engine/netconverter.h>
+#include <engine/map.h>
+#include <engine/shared/config.h>
+#include <engine/shared/jsonwriter.h>
+#include <engine/shared/memheap.h>
 #include <engine/storage.h>
 #include <engine/shared/config.h>
 
@@ -1042,6 +1046,8 @@ void CGS::OnTick()
 	}
 
 	Mmo()->OnTick();
+
+	Server()->ExpireServerInfo();
 }
 
 // Here we use functions that can have static data or functions that don't need to be called in all worlds
@@ -1299,6 +1305,8 @@ void CGS::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 				SendSkinChange(pPlayer->GetCID(), i);
 			}
+			Server()->ExpireServerInfo();
+			m_pController->OnPlayerInfoChange(pPlayer);
 		}
 
 		//////////////////////////////////////////////////////////////////////////////////
@@ -1358,6 +1366,8 @@ void CGS::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			// client is ready to enter
 			CNetMsg_Sv_ReadyToEnter m;
 			Server()->SendPackMsg(&m, MSGFLAG_VITAL|MSGFLAG_FLUSH, ClientID);
+
+			Server()->ExpireServerInfo();
 		}
 	}
 }
@@ -2432,3 +2442,60 @@ bool CGS::CheckingPlayersDistance(vec2 Pos, float Distance) const
 }
 
 IGameServer *CreateGameServer() { return new CGS; }
+
+void CGS::OnUpdatePlayerServerInfo(CJsonStringWriter *pJSonWriter, int Id)
+{
+	if(!m_apPlayers[Id])
+		return;
+
+	STeeInfo &TeeInfo = m_apPlayers[Id]->m_TeeInfos;
+
+	pJSonWriter->WriteAttribute("skin");
+	pJSonWriter->BeginObject();
+
+	const char *apPartNames[NUM_SKINPARTS] = {"body", "marking", "decoration", "hands", "feet", "eyes"};
+
+	for(int i = 0; i < NUM_SKINPARTS; ++i)
+	{
+		pJSonWriter->WriteAttribute(apPartNames[i]);
+		pJSonWriter->BeginObject();
+
+		pJSonWriter->WriteAttribute("name");
+		pJSonWriter->WriteStrValue(TeeInfo.m_aaSkinPartNames[i]);
+
+		if(TeeInfo.m_aUseCustomColors[i])
+		{
+			pJSonWriter->WriteAttribute("color");
+			pJSonWriter->WriteIntValue(TeeInfo.m_aSkinPartColors[i]);
+		}
+
+		pJSonWriter->EndObject();
+	}
+
+	pJSonWriter->EndObject();
+
+	pJSonWriter->WriteAttribute("afk");
+	pJSonWriter->WriteBoolValue(false);
+
+	const int Team = m_apPlayers[Id]->GetTeam() == TEAM_SPECTATORS ? -1 : 0;
+
+	pJSonWriter->WriteAttribute("team");
+	pJSonWriter->WriteIntValue(Team);
+}
+
+int NetworkClipped(int SnappingClient, vec2 CheckPos, CGameContext *pGameServer)
+{
+	if(SnappingClient == -1)
+		return 0;
+
+	float dx = pGameServer->m_apPlayers[SnappingClient]->m_ViewPos.x - CheckPos.x;
+	float dy = pGameServer->m_apPlayers[SnappingClient]->m_ViewPos.y - CheckPos.y;
+
+	if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
+		return 1;
+
+	if(distance(pGameServer->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 1100.0f)
+		return 1;
+
+	return 0;
+}

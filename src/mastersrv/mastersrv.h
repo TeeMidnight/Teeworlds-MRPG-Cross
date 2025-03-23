@@ -58,4 +58,4 @@ enum
 	SERVERINFO_INGAME,
 };
 
-#endif
+#endif // ENGINE_SHARED_MASTERSERVER_H

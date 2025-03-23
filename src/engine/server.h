@@ -144,6 +144,8 @@ public:
 	virtual void Kick(int ClientID, const char *pReason) = 0;
 
 	virtual void SendServerInfo(int ClientID) = 0;
+
+	virtual void ExpireServerInfo() = 0;
 };
 
 class IGameServer : public IInterface
@@ -182,6 +184,14 @@ public:
 	virtual int GetRank(int AuthID) = 0;
 
 	virtual class CGS *GS() = 0;
+	virtual bool TimeScore() const { return false; }
+	/**
+	 * Used to report custom player info to master servers.
+	 *
+	 * @param pJsonWriter A pointer to a CJsonStringWriter which the custom data will be added to.
+	 * @param i The client id.
+	 */
+	virtual void OnUpdatePlayerServerInfo(class CJsonStringWriter *pJSonWriter, int Id) = 0;
 };
 
 extern IGameServer *CreateGameServer();
