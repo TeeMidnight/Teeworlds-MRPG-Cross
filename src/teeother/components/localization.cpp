@@ -126,7 +126,7 @@ bool CLocalization::Init()
 	}
 
 	const int FileSize = (int)io_length(File);
-	char* pFileData = (char*)malloc(FileSize);
+	char* pFileData = (char*) mem_alloc(FileSize, 1);
 	io_read(File, pFileData, FileSize);
 	io_close(File);
 
@@ -138,7 +138,7 @@ bool CLocalization::Init()
 	free(pFileData);
 	if(pJsonData == nullptr)
 	{
-		delete[] pFileData;
+		mem_free(pFileData);
 		return true; // return true because it's not a critical error
 	}
 
