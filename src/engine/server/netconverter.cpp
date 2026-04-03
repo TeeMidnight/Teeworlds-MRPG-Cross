@@ -422,7 +422,7 @@ bool CNetConverter::PrevConvertClientMsg(CMsgUnpacker *pItem, int& Type, bool Sy
 
 int CNetConverter::GetExSnapID(const char *pUuidStr)
 {
-    CUuid Uuid = CalculateUuid(pUuidStr);
+    Uuid Uuid = CalculateUuid(pUuidStr);
     for(int i = 0; i < m_NumSnapItemsEx; i ++)
     {
         if(m_SnapItemEx[i] == Uuid)
@@ -1035,7 +1035,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
         {
             // DDNet message NETMSGTYPE_SV_COMMANDINFO
             CMsgPacker MsgDDNet(0, false, false);
-            CUuid Uuid = CalculateUuid("commandinfo@netmsg.ddnet.org");
+            Uuid Uuid = CalculateUuid("commandinfo@netmsg.ddnet.org");
             MsgDDNet.AddRaw(&Uuid, sizeof(Uuid));
             int Size = Unpacker.Size();
             MsgDDNet.AddRaw(Unpacker.GetRaw(Size), Size);
@@ -1046,7 +1046,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
         {
             // DDNet message NETMSGTYPE_SV_COMMANDINFOREMOVE
             CMsgPacker MsgDDNet(0, false, false);
-            CUuid Uuid = CalculateUuid("commandinfo-remove@netmsg.ddnet.org");
+            Uuid Uuid = CalculateUuid("commandinfo-remove@netmsg.ddnet.org");
             MsgDDNet.AddRaw(&Uuid, sizeof(Uuid));
             int Size = Unpacker.Size();
             MsgDDNet.AddRaw(Unpacker.GetRaw(Size), Size);
@@ -1317,7 +1317,7 @@ void CNetConverter::SnapItemUuid(int ClientID)
         int *pUuidItem = (int *)Server()->SnapNewItem(0, MAX_DDNETSNAP_TYPE - i, sizeof(m_SnapItemEx[i])); // NETOBJTYPE_EX
         if(pUuidItem)
         {
-            for(size_t j = 0; j < sizeof(CUuid) / sizeof(int32_t); j ++)
+            for(size_t j = 0; j < sizeof(Uuid) / sizeof(int32_t); j ++)
                 pUuidItem[j] = bytes_be_to_uint(&m_SnapItemEx[i].m_aData[j * sizeof(int32_t)]);
         }
     }

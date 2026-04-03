@@ -50,7 +50,7 @@ bool CLocalization::CLanguage::Load(CLocalization* pLocalization, IStorageEngine
 	mem_zero(&JsonSettings, sizeof(JsonSettings));
 	char aError[256];
 	json_value* pJsonData = json_parse_ex(&JsonSettings, pFileData, FileSize, aError);
-	free(pFileData);
+	mem_free(pFileData);
 
 	if(pJsonData == nullptr)
 	{
@@ -135,7 +135,6 @@ bool CLocalization::Init()
 	mem_zero(&JsonSettings, sizeof(JsonSettings));
 	char aError[256];
 	json_value* pJsonData = json_parse_ex(&JsonSettings, pFileData, FileSize, aError);
-	free(pFileData);
 	if(pJsonData == nullptr)
 	{
 		mem_free(pFileData);
