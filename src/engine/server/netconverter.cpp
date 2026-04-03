@@ -1,10 +1,12 @@
+
+#include <base/uuid.h>
+
 #include <engine/server.h>
 #include <engine/message.h>
 
 #include <engine/shared/config.h>
 #include <engine/shared/protocol6.h>
 #include <engine/shared/snapshot.h>
-#include <engine/shared/uuid.h>
 
 #include <game/server/entities/character.h>
 #include <game/server/gamecontroller.h>
