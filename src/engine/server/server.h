@@ -49,7 +49,7 @@ class CServerBan : public CNetBan
 public:
 	class CServer *Server() const { return m_pServer; }
 
-	void InitServerBan(class IConsole *pConsole, class IStorage *pStorage, class CServer *pServer);
+	void InitServerBan(class IConsole *pConsole, class IStorageEngine *pStorage, class CServer *pServer);
 
 	int BanAddr(const NETADDR *pAddr, int Seconds, const char *pReason) override;
 	int BanRange(const CNetRange *pRange, int Seconds, const char *pReason) override;

@@ -1761,7 +1761,7 @@ void CServer::InitInterfaces(IKernel *pKernel)
 	m_pConsole = pKernel->RequestInterface<IConsole>();
 	m_pGameServer = pKernel->RequestInterface<IGameServer>();
 	m_pMap = pKernel->RequestInterface<IEngineMap>();
-	m_pStorage = pKernel->RequestInterface<IStorage>();
+	m_pStorage = pKernel->RequestInterface<IStorageEngine>();
 	Kernel()->RegisterInterface(static_cast<IHttp *>(&m_Http));
 }
 
@@ -2052,7 +2052,7 @@ int CServer::MapListEntryCallback(const char *pFilename, int IsDir, int DirType,
 		str_copy(Userdata.m_aName, aFilename, sizeof(Userdata.m_aName));
 		char aFindPath[IO_MAX_PATH_LENGTH];
 		str_format(aFindPath, sizeof(aFindPath), "maps/%s/", aFilename);
-		pThis->m_pStorage->ListDirectory(IStorage::TYPE_ALL, aFindPath, MapListEntryCallback, &Userdata);
+		pThis->m_pStorage->ListDirectory(IStorageEngine::TYPE_ALL, aFindPath, MapListEntryCallback, &Userdata);
 		return 0;
 	}
 
@@ -2083,7 +2083,7 @@ void CServer::InitMapList()
 
 	Userdata.m_pServer = this;
 	str_copy(Userdata.m_aName, "", sizeof(Userdata.m_aName));
-	m_pStorage->ListDirectory(IStorage::TYPE_ALL, "maps/", MapListEntryCallback, &Userdata);
+	m_pStorage->ListDirectory(IStorageEngine::TYPE_ALL, "maps/", MapListEntryCallback, &Userdata);
 	dbg_msg("server", "%d maps added to maplist", m_lMaps.size());
 }
 
