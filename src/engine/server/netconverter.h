@@ -25,7 +25,7 @@ private:
 
     int m_GameFlags;
     int64 m_aChatTick[MAX_CLIENTS];
-    CUuid m_SnapItemEx[64];
+    Uuid m_SnapItemEx[64];
     int m_NumSnapItemsEx;
     int m_EventID;
     bool m_aClientLocal[MAX_CLIENTS];
