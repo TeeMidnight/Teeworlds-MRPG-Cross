@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #ifndef ENGINE_SHARED_JSONWRITER_H
 #define ENGINE_SHARED_JSONWRITER_H
+
 #include <base/system.h>
 
 #include <stack>
@@ -66,7 +67,7 @@ public:
 	// Names inside one object should be unique, but this is not checked here.
 	// Must be used to begin writing anything inside objects and only there.
 	// Must be followed by a datatype for the attribute value.
-	void WriteAttribute(const char* pName);
+	void WriteAttribute(const char *pName);
 
 	// Functions for writing value literals:
 	// - As array values in arrays.
