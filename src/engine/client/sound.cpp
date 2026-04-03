@@ -265,7 +265,7 @@ int CSound::Update()
 	return 0;
 }
 
-int CSound::Shutdown()
+void CSound::Shutdown()
 {
 	SDL_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
