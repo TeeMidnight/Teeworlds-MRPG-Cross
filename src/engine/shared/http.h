@@ -77,7 +77,7 @@ class CHttpRequest : public IHttpRequest
 		// Unreachable, maybe assert instead?
 		return "UNKNOWN";
 	}
-	class CConfig *m_pConfig;
+	class CConfiguration *m_pConfig;
 
 	char m_aUrl[256] = {0};
 
@@ -155,9 +155,9 @@ protected:
 	virtual void OnProgress() {}
 	virtual void OnCompletion(EHttpState State) {}
 public:
-	CConfig *Config() { return m_pConfig; }
+	CConfiguration *Config() { return m_pConfig; }
 
-	CHttpRequest(const char *pUrl, CConfig *pConfig);
+	CHttpRequest(const char *pUrl, CConfiguration *pConfig);
 	virtual ~CHttpRequest();
 
 	void Timeout(CTimeout Timeout) { m_Timeout = Timeout; }
@@ -251,19 +251,19 @@ public:
 	std::optional<int64_t> ResultLastModified() const;
 };
 
-inline std::unique_ptr<CHttpRequest> HttpHead(const char *pUrl, CConfig *pConfig)
+inline std::unique_ptr<CHttpRequest> HttpHead(const char *pUrl, CConfiguration *pConfig)
 {
 	auto pResult = std::make_unique<CHttpRequest>(pUrl, pConfig);
 	pResult->Head();
 	return pResult;
 }
 
-inline std::unique_ptr<CHttpRequest> HttpGet(const char *pUrl, CConfig *pConfig)
+inline std::unique_ptr<CHttpRequest> HttpGet(const char *pUrl, CConfiguration *pConfig)
 {
 	return std::make_unique<CHttpRequest>(pUrl, pConfig);
 }
 
-inline std::unique_ptr<CHttpRequest> HttpGetFile(const char *pUrl, CConfig *pConfig, IStorage *pStorage, const char *pOutputFile, int StorageType)
+inline std::unique_ptr<CHttpRequest> HttpGetFile(const char *pUrl, CConfiguration *pConfig, IStorage *pStorage, const char *pOutputFile, int StorageType)
 {
 	std::unique_ptr<CHttpRequest> pResult = HttpGet(pUrl, pConfig);
 	pResult->WriteToFile(pStorage, pOutputFile, StorageType);
@@ -271,7 +271,7 @@ inline std::unique_ptr<CHttpRequest> HttpGetFile(const char *pUrl, CConfig *pCon
 	return pResult;
 }
 
-inline std::unique_ptr<CHttpRequest> HttpGetBoth(const char *pUrl, CConfig *pConfig, IStorage *pStorage, const char *pOutputFile, int StorageType)
+inline std::unique_ptr<CHttpRequest> HttpGetBoth(const char *pUrl, CConfiguration *pConfig, IStorage *pStorage, const char *pOutputFile, int StorageType)
 {
 	std::unique_ptr<CHttpRequest> pResult = HttpGet(pUrl, pConfig);
 	pResult->WriteToFileAndMemory(pStorage, pOutputFile, StorageType);
@@ -279,7 +279,7 @@ inline std::unique_ptr<CHttpRequest> HttpGetBoth(const char *pUrl, CConfig *pCon
 	return pResult;
 }
 
-inline std::unique_ptr<CHttpRequest> HttpPost(const char *pUrl, CConfig *pConfig, const unsigned char *pData, size_t DataLength)
+inline std::unique_ptr<CHttpRequest> HttpPost(const char *pUrl, CConfiguration *pConfig, const unsigned char *pData, size_t DataLength)
 {
 	auto pResult = std::make_unique<CHttpRequest>(pUrl, pConfig);
 	pResult->Post(pData, DataLength);
@@ -287,7 +287,7 @@ inline std::unique_ptr<CHttpRequest> HttpPost(const char *pUrl, CConfig *pConfig
 	return pResult;
 }
 
-inline std::unique_ptr<CHttpRequest> HttpPostJson(const char *pUrl, CConfig *pConfig, const char *pJson)
+inline std::unique_ptr<CHttpRequest> HttpPostJson(const char *pUrl, CConfiguration *pConfig, const char *pJson)
 {
 	auto pResult = std::make_unique<CHttpRequest>(pUrl, pConfig);
 	pResult->PostJson(pJson);
@@ -332,11 +332,11 @@ class CHttp : public IHttp
 	static void ThreadMain(void *pUser);
 	void RunLoop();
 
-	class CConfig *m_pConfig;
+	class CConfiguration *m_pConfig;
 public:
-	CConfig *Config() { return m_pConfig; }
+	CConfiguration *Config() { return m_pConfig; }
 	// Startup
-	bool Init(std::chrono::milliseconds ShutdownDelay, CConfig *pConfig);
+	bool Init(std::chrono::milliseconds ShutdownDelay, CConfiguration *pConfig);
 
 	// User
 	virtual void Run(std::shared_ptr<IHttpRequest> pRequest) override;

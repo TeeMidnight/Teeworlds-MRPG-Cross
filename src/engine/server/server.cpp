@@ -1809,7 +1809,7 @@ int CServer::Run()
 		return -1;
 	}
 
-	m_pRegister = CreateRegister(Config(), m_pConsole, Kernel()->RequestInterface<IEngine>(), &m_Http, Config()->m_SvPort, m_NetServer.GetGlobalToken());
+	m_pRegister = CreateRegister(&g_Config, m_pConsole, Kernel()->RequestInterface<IEngine>(), &m_Http, g_Config.m_SvPort, m_NetServer.GetGlobalToken());
 	m_Econ.Init(Config(), Console(), &m_ServerBan);
 
 	str_format(aBuf, sizeof(aBuf), "server name is '%s'", g_Config.m_SvName);

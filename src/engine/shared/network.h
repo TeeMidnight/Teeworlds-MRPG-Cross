@@ -486,7 +486,6 @@ class CNetServer : public CNetBase
 	unsigned char m_aSecurityTokenSeed[16];
 
 public:
-	int MaxClients() const { return m_MaxClients; }
 	//
 	bool Open(NETADDR BindAddr, class CConfiguration *pConfig, class IConsole *pConsole, class IEngine *pEngine, class CNetBan *pNetBan,
 		int MaxClients, int MaxClientsPerIP, NETFUNC_NEWCLIENT pfnNewClient, NETFUNC_DELCLIENT pfnDelClient, void *pUser);

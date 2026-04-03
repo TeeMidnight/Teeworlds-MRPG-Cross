@@ -62,7 +62,7 @@ bool HttpHasIpresolveBug()
 	return curl_version_info(CURLVERSION_NOW)->version_num < 0x074d00;
 }
 
-CHttpRequest::CHttpRequest(const char *pUrl, CConfig *pConfig) :
+CHttpRequest::CHttpRequest(const char *pUrl, CConfiguration *pConfig) :
 	m_pConfig(pConfig)
 {
 	str_copy(m_aUrl, pUrl, sizeof(m_aUrl));
@@ -585,7 +585,7 @@ std::optional<int64_t> CHttpRequest::ResultLastModified() const
 	return m_ResultLastModified;
 }
 
-bool CHttp::Init(std::chrono::milliseconds ShutdownDelay, CConfig *pConfig)
+bool CHttp::Init(std::chrono::milliseconds ShutdownDelay, CConfiguration *pConfig)
 {
 	m_ShutdownDelay = ShutdownDelay;
 	m_pConfig = pConfig;
