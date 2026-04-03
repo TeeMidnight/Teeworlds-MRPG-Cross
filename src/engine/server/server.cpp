@@ -1290,7 +1290,7 @@ void CServer::GenerateServerInfo6(CPacker *pPacker, int Token, int Type, NETADDR
 	// count the players
 	char aBuf[256];
 	int PlayerCount = 0, ClientCount = 0;
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
@@ -1440,7 +1440,7 @@ void CServer::GenerateServerInfo6(CPacker *pPacker, int Token, int Type, NETADDR
 	// For legacy 64p, send 24 players per packet.
 	// For extended, send as much players as possible.
 
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
@@ -1591,7 +1591,7 @@ void CServer::UpdateRegisterServerInfo()
 	JsonWriter.WriteAttribute("clients");
 	JsonWriter.BeginArray();
 
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(m_aClients[i].IncludedInServerInfo())
 		{
