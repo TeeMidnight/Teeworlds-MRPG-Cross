@@ -13,23 +13,6 @@ CJsonParser::~CJsonParser()
 	json_value_free(m_pParsedJson);
 }
 
-json_value *CJsonParser::ParseFile(const char *pFilename, IStorageEngine *pStorage, int StorageType)
-{
-	dbg_assert(!m_pParsedJson && !m_aError[0], "already parsed");
-
-	void *pFileData;
-	unsigned FileSize;
-	if(!pStorage->ReadFile(pFilename, StorageType, &pFileData, &FileSize))
-	{
-		str_format(m_aError, sizeof(m_aError), "Failed to read '%s'", pFilename);
-		return 0x0;
-	}
-
-	ParseData(pFileData, FileSize, pFilename);
-	mem_free(pFileData);
-	return m_pParsedJson;
-}
-
 json_value *CJsonParser::ParseData(const void *pFileData, unsigned FileSize, const char *pContext)
 {
 	dbg_assert(!m_pParsedJson && !m_aError[0], "already parsed");
