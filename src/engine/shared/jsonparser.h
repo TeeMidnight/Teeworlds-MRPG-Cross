@@ -15,7 +15,7 @@ class CJsonParser
 public:
 	CJsonParser();
 	~CJsonParser();
-	json_value *ParseFile(const char *pFilename, IStorage *pStorage, int StorageType = IStorage::TYPE_ALL);
+	json_value *ParseFile(const char *pFilename, IStorageEngine *pStorage, int StorageType = IStorageEngine::TYPE_ALL);
 	json_value *ParseData(const void *pFileData, unsigned FileSize, const char *pContext = "rawdata");
 	json_value *ParseString(const char *pString, const char *pContext = "string"); // assumes a zero-terminated string
 	json_value *ParsedJson() { return m_pParsedJson; }

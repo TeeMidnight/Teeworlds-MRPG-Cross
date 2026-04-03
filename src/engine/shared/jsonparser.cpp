@@ -13,7 +13,7 @@ CJsonParser::~CJsonParser()
 	json_value_free(m_pParsedJson);
 }
 
-json_value *CJsonParser::ParseFile(const char *pFilename, IStorage *pStorage, int StorageType)
+json_value *CJsonParser::ParseFile(const char *pFilename, IStorageEngine *pStorage, int StorageType)
 {
 	dbg_assert(!m_pParsedJson && !m_aError[0], "already parsed");
 
