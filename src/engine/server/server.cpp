@@ -1980,8 +1980,6 @@ int CServer::Run()
 					UpdateServerInfo();
 			}
 
-			// master server stuff
-			m_Register.RegisterUpdate(m_NetServer.NetType());
 			PumpNetwork();
 
 			// wait for incomming data
@@ -1990,7 +1988,7 @@ int CServer::Run()
 	}
 
 	// disconnect all clients on shutdown
-	m_NetServer.Close(m_aShutdownReason);
+	m_NetServer.Close("shutdown");
 	m_pRegister->OnShutdown();
 	m_Econ.Shutdown();
 	m_Http.Shutdown();
@@ -2079,21 +2077,11 @@ void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
 void CServer::ConchainSpecialInfoupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
-	if(pResult->NumArguments())
-	{
-		str_clean_whitespaces(pSelf->g_Config.m_SvName);
-		pSelf->UpdateServerInfo(true);
-	}
-}
-
-void CServer::ConchainPlayerSlotsUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
-{
-	pfnCallback(pResult, pCallbackUserData);
 	CServer *pSelf = (CServer *) pUserData;
 	if(pResult->NumArguments())
 	{
-		if(pSelf->g_Config.m_SvMaxClients < pSelf->g_Config.m_SvPlayerSlots)
-			pSelf->g_Config.m_SvPlayerSlots = pSelf->g_Config.m_SvMaxClients;
+		str_clean_whitespaces(g_Config.m_SvName);
+		pSelf->UpdateServerInfo(true);
 	}
 }
 
@@ -2103,8 +2091,6 @@ void CServer::ConchainMaxclientsUpdate(IConsole::IResult *pResult, void *pUserDa
 	CServer *pSelf = (CServer *) pUserData;
 	if(pResult->NumArguments())
 	{
-		if(pSelf->g_Config.m_SvMaxClients < pSelf->g_Config.m_SvPlayerSlots)
-			pSelf->g_Config.m_SvPlayerSlots = pSelf->g_Config.m_SvMaxClients;
 		pSelf->m_NetServer.SetMaxClients(pResult->GetInteger(0));
 	}
 }

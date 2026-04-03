@@ -8,9 +8,10 @@
 #include <engine/shared/config.h>
 #include <engine/shared/http.h>
 #include <engine/shared/jsonparser.h>
-#include <engine/shared/masterserver.h>
 #include <engine/shared/network.h>
 #include <engine/shared/packer.h>
+
+#include <mastersrv/mastersrv.h>
 
 class CRegister : public IRegister
 {
