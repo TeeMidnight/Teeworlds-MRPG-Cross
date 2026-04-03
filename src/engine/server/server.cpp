@@ -1757,10 +1757,7 @@ bool CServer::LoadMap(int ID)
 
 void CServer::InitInterfaces(IKernel *pKernel)
 {
-	m_pConfig = pKernel->RequestInterface<IConfigManager>()->Values();
 	m_pConsole = pKernel->RequestInterface<IConsole>();
-	m_pGameServer = pKernel->RequestInterface<IGameServer>();
-	m_pMap = pKernel->RequestInterface<IEngineMap>();
 	m_pStorage = pKernel->RequestInterface<IStorageEngine>();
 	Kernel()->RegisterInterface(static_cast<IHttp *>(&m_Http));
 }
@@ -1803,14 +1800,14 @@ int CServer::Run()
 		return -1;
 	}
 
-	if(!m_Http.Init(std::chrono::seconds{2}, Config()))
+	if(!m_Http.Init(std::chrono::seconds{2}, &g_Config))
 	{
 		dbg_msg("server", "Failed to initialize the HTTP client.");
 		return -1;
 	}
 
 	m_pRegister = CreateRegister(&g_Config, m_pConsole, Kernel()->RequestInterface<IEngine>(), &m_Http, g_Config.m_SvPort, m_NetServer.GetGlobalToken());
-	m_Econ.Init(Config(), Console(), &m_ServerBan);
+	m_Econ.Init(Console(), m_pServerBan);
 
 	str_format(aBuf, sizeof(aBuf), "server name is '%s'", g_Config.m_SvName);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
@@ -2006,85 +2003,10 @@ int CServer::Run()
 
 void CServer::Free()
 {
-	if(m_pMap)
-	{
-		m_pMap->Unload();
-	}
-
 	if(m_pRegister)
 	{
 		delete m_pRegister;
 	}
-
-	if(m_pCurrentMapData)
-	{
-		mem_free(m_pCurrentMapData);
-		m_pCurrentMapData = 0;
-	}
-}
-
-struct CSubdirCallbackUserdata
-{
-	CServer *m_pServer;
-	char m_aName[IConsole::TEMPMAP_NAME_LENGTH];
-	bool m_StandardOnly;
-};
-
-int CServer::MapListEntryCallback(const char *pFilename, int IsDir, int DirType, void *pUser)
-{
-	CSubdirCallbackUserdata *pUserdata = (CSubdirCallbackUserdata *) pUser;
-	CServer *pThis = pUserdata->m_pServer;
-
-	if(pFilename[0] == '.') // hidden files
-		return 0;
-
-	char aFilename[IO_MAX_PATH_LENGTH];
-	if(pUserdata->m_aName[0])
-		str_format(aFilename, sizeof(aFilename), "%s/%s", pUserdata->m_aName, pFilename);
-	else
-		str_format(aFilename, sizeof(aFilename), "%s", pFilename);
-
-	if(IsDir)
-	{
-		CSubdirCallbackUserdata Userdata;
-		Userdata.m_StandardOnly = pUserdata->m_StandardOnly;
-		Userdata.m_pServer = pThis;
-		str_copy(Userdata.m_aName, aFilename, sizeof(Userdata.m_aName));
-		char aFindPath[IO_MAX_PATH_LENGTH];
-		str_format(aFindPath, sizeof(aFindPath), "maps/%s/", aFilename);
-		pThis->m_pStorage->ListDirectory(IStorageEngine::TYPE_ALL, aFindPath, MapListEntryCallback, &Userdata);
-		return 0;
-	}
-
-	const char *pSuffix = str_endswith(aFilename, ".map");
-	if(!pSuffix) // not ending with .map
-		return 0;
-	aFilename[pSuffix - aFilename] = 0; // remove suffix
-
-	if(str_length(aFilename) >= IConsole::TEMPMAP_NAME_LENGTH)
-		return 0;
-
-	pThis->m_lMaps.add(CMapListEntry(aFilename));
-
-	return 0;
-}
-
-void CServer::InitMapList()
-{
-	m_lMaps.clear();
-
-	CSubdirCallbackUserdata Userdata;
-	if(str_comp(g_Config.m_SvMaplist, "standard") == 0)
-		Userdata.m_StandardOnly = true;
-	else if(str_comp(g_Config.m_SvMaplist, "all") == 0)
-		Userdata.m_StandardOnly = false;
-	else /* "none" or any other value */
-		return;
-
-	Userdata.m_pServer = this;
-	str_copy(Userdata.m_aName, "", sizeof(Userdata.m_aName));
-	m_pStorage->ListDirectory(IStorageEngine::TYPE_ALL, "maps/", MapListEntryCallback, &Userdata);
-	dbg_msg("server", "%d maps added to maplist", m_lMaps.size());
 }
 
 void CServer::ConKick(IConsole::IResult *pResult, void *pUser)
@@ -2378,8 +2300,6 @@ int main(int argc, const char **argv) // ignore_convention
 
 	pEngine->Init();
 	pConfig->Init(FlagMask);
-	pEngineMasterServer->Init();
-	pEngineMasterServer->Load();
 
 	if(!UseDefaultConfig)
 	{

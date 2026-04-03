@@ -105,7 +105,6 @@ public:
 	CSnapIDPool m_IDPool;
 	CNetServer m_NetServer;
 	CEcon m_Econ;
-	CServerBan m_ServerBan;
 	CHttp m_Http;
 
 	int64 m_GameStartTime;
@@ -249,6 +248,7 @@ public:
 	virtual void *SnapNewItem(int Type, int ID, int Size);
 	virtual void *GetSnapItemData(int Type, int ID);
 	void SnapSetStaticsize(int ItemType, int Size);
+	void Free();
 };
 
 #endif
