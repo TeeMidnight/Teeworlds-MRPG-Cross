@@ -16,7 +16,7 @@ public:
 	virtual int Init();
 
 	int Update();
-	int Shutdown();
+	void Shutdown();
 	int AllocID();
 
 	static void RateConvert(int SampleID);
