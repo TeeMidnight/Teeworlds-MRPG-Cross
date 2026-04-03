@@ -1549,7 +1549,7 @@ void CServer::UpdateRegisterServerInfo()
 	int MaxClients = maximum(m_NetServer.MaxClients(), ClientCount);
 	char aMapSha256[SHA256_MAXSTRSIZE];
 
-	sha256_str(m_CurrentMapSha256, aMapSha256, sizeof(aMapSha256));
+	sha256_str(MultiWorlds()->GetWorld(0)->m_pLoadedMap->Sha256(), aMapSha256, sizeof(aMapSha256));
 
 	CJsonStringWriter JsonWriter;
 
@@ -1561,22 +1561,22 @@ void CServer::UpdateRegisterServerInfo()
 	JsonWriter.WriteIntValue(MaxPlayers);
 
 	JsonWriter.WriteAttribute("passworded");
-	JsonWriter.WriteBoolValue(Config()->m_Password[0]);
+	JsonWriter.WriteBoolValue(g_Config.m_Password[0]);
 
 	JsonWriter.WriteAttribute("game_type");
-	JsonWriter.WriteStrValue(GameServer()->GameType());
+	JsonWriter.WriteStrValue(MOD_NAME);
 
 	JsonWriter.WriteAttribute("name");
-	JsonWriter.WriteStrValue(Config()->m_SvName);
+	JsonWriter.WriteStrValue(g_Config.m_SvName);
 
 	JsonWriter.WriteAttribute("map");
 	JsonWriter.BeginObject();
 	JsonWriter.WriteAttribute("name");
-	JsonWriter.WriteStrValue(GetMapName());
+	JsonWriter.WriteStrValue(GetWorldName(0));
 	JsonWriter.WriteAttribute("sha256");
 	JsonWriter.WriteStrValue(aMapSha256);
 	JsonWriter.WriteAttribute("size");
-	JsonWriter.WriteIntValue(m_CurrentMapSize);
+	JsonWriter.WriteIntValue(MultiWorlds()->GetWorld(0)->m_pLoadedMap->GetCurrentMapSize());
 	JsonWriter.EndObject();
 
 	JsonWriter.WriteAttribute("version");
@@ -1586,7 +1586,7 @@ void CServer::UpdateRegisterServerInfo()
 	JsonWriter.WriteStrValue("points"); // "points" or "time"
 
 	JsonWriter.WriteAttribute("requires_login");
-	JsonWriter.WriteBoolValue(false);
+	JsonWriter.WriteBoolValue(true);
 
 	JsonWriter.WriteAttribute("clients");
 	JsonWriter.BeginArray();
@@ -2074,9 +2074,9 @@ void CServer::InitMapList()
 	m_lMaps.clear();
 
 	CSubdirCallbackUserdata Userdata;
-	if(str_comp(Config()->m_SvMaplist, "standard") == 0)
+	if(str_comp(g_Config.m_SvMaplist, "standard") == 0)
 		Userdata.m_StandardOnly = true;
-	else if(str_comp(Config()->m_SvMaplist, "all") == 0)
+	else if(str_comp(g_Config.m_SvMaplist, "all") == 0)
 		Userdata.m_StandardOnly = false;
 	else /* "none" or any other value */
 		return;
@@ -2159,7 +2159,7 @@ void CServer::ConchainSpecialInfoupdate(IConsole::IResult *pResult, void *pUserD
 	pfnCallback(pResult, pCallbackUserData);
 	if(pResult->NumArguments())
 	{
-		str_clean_whitespaces(pSelf->Config()->m_SvName);
+		str_clean_whitespaces(pSelf->g_Config.m_SvName);
 		pSelf->UpdateServerInfo(true);
 	}
 }
@@ -2170,8 +2170,8 @@ void CServer::ConchainPlayerSlotsUpdate(IConsole::IResult *pResult, void *pUserD
 	CServer *pSelf = (CServer *) pUserData;
 	if(pResult->NumArguments())
 	{
-		if(pSelf->Config()->m_SvMaxClients < pSelf->Config()->m_SvPlayerSlots)
-			pSelf->Config()->m_SvPlayerSlots = pSelf->Config()->m_SvMaxClients;
+		if(pSelf->g_Config.m_SvMaxClients < pSelf->g_Config.m_SvPlayerSlots)
+			pSelf->g_Config.m_SvPlayerSlots = pSelf->g_Config.m_SvMaxClients;
 	}
 }
 
@@ -2181,8 +2181,8 @@ void CServer::ConchainMaxclientsUpdate(IConsole::IResult *pResult, void *pUserDa
 	CServer *pSelf = (CServer *) pUserData;
 	if(pResult->NumArguments())
 	{
-		if(pSelf->Config()->m_SvMaxClients < pSelf->Config()->m_SvPlayerSlots)
-			pSelf->Config()->m_SvPlayerSlots = pSelf->Config()->m_SvMaxClients;
+		if(pSelf->g_Config.m_SvMaxClients < pSelf->g_Config.m_SvPlayerSlots)
+			pSelf->g_Config.m_SvPlayerSlots = pSelf->g_Config.m_SvMaxClients;
 		pSelf->m_NetServer.SetMaxClients(pResult->GetInteger(0));
 	}
 }
@@ -2356,8 +2356,6 @@ int main(int argc, const char **argv) // ignore_convention
 	IConfig *pConfig = CreateConfig();
 	INetConverter *pNetConverter = CreateNetConverter(pServer, &g_Config);
 	pNetConverter->ResetSnapItemsEx();
-
-	pServer->InitRegister(&pServer->m_NetServer, pEngineMasterServer, pConsole);
 
 	bool RegisterFail = false;
 	RegisterFail = RegisterFail || !pKernel->RegisterInterface(pServer); // register as both

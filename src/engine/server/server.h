@@ -6,56 +6,7 @@
 #include <engine/shared/http.h>
 #include <engine/shared/memheap.h>
 
-class CSnapIDPool
-{
-	enum
-	{
-		MAX_IDS = 16 * 1024,
-	};
 
-	class CID
-	{
-	public:
-		short m_Next;
-		short m_State; // 0 = free, 1 = allocated, 2 = timed
-		int m_Timeout;
-	};
-
-	CID m_aIDs[MAX_IDS];
-
-	int m_FirstFree;
-	int m_FirstTimed;
-	int m_LastTimed;
-	int m_Usage;
-	int m_InUsage;
-
-public:
-	CSnapIDPool();
-
-	void Reset();
-	void RemoveFirstTimeout();
-	int NewID();
-	void TimeoutIDs();
-	void FreeID(int ID);
-};
-
-class CServerBan : public CNetBan
-{
-	class CServer *m_pServer;
-
-	template<class T>
-	int BanExt(T *pBanPool, const typename T::CDataType *pData, int Seconds, const char *pReason);
-
-public:
-	class CServer *Server() const { return m_pServer; }
-
-	void InitServerBan(class IConsole *pConsole, class IStorageEngine *pStorage, class CServer *pServer);
-
-	int BanAddr(const NETADDR *pAddr, int Seconds, const char *pReason) override;
-	int BanRange(const CNetRange *pRange, int Seconds, const char *pReason) override;
-
-	static void ConBanExt(class IConsole::IResult *pResult, void *pUser);
-};
 
 class CServer : public IServer
 {
