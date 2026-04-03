@@ -374,7 +374,7 @@ unsigned io_read(IOHANDLE io, void *buffer, unsigned size)
 void io_read_all(IOHANDLE io, void **result, unsigned *result_len)
 {
 	unsigned len = (unsigned) io_length(io);
-	char *buffer = (char *) mem_alloc(len + 1);
+	char *buffer = (char *) mem_alloc(len + 1, 1);
 	unsigned read = io_read(io, buffer, len + 1); // +1 to check if the file size is larger than expected
 	if(read < len)
 	{
