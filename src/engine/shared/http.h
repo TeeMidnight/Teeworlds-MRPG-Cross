@@ -16,7 +16,7 @@
 #include <engine/http.h>
 
 typedef struct _json_value json_value;
-class IStorage;
+class IStorageEngine;
 
 enum class EHttpState
 {
@@ -174,9 +174,9 @@ public:
 		m_WriteToFile = false;
 	}
 	// Download to filesystem and memory.
-	void WriteToFileAndMemory(IStorage *pStorage, const char *pDest, int StorageType);
+	void WriteToFileAndMemory(IStorageEngine *pStorage, const char *pDest, int StorageType);
 	// Download to the filesystem only.
-	void WriteToFile(IStorage *pStorage, const char *pDest, int StorageType);
+	void WriteToFile(IStorageEngine *pStorage, const char *pDest, int StorageType);
 	// Don't place the file in the specified location until
 	// `OnValidation(true)` has been called.
 	void ValidateBeforeOverwrite(bool ValidateBeforeOverwrite) { m_ValidateBeforeOverwrite = ValidateBeforeOverwrite; }
@@ -263,7 +263,7 @@ inline std::unique_ptr<CHttpRequest> HttpGet(const char *pUrl, CConfiguration *p
 	return std::make_unique<CHttpRequest>(pUrl, pConfig);
 }
 
-inline std::unique_ptr<CHttpRequest> HttpGetFile(const char *pUrl, CConfiguration *pConfig, IStorage *pStorage, const char *pOutputFile, int StorageType)
+inline std::unique_ptr<CHttpRequest> HttpGetFile(const char *pUrl, CConfiguration *pConfig, IStorageEngine *pStorage, const char *pOutputFile, int StorageType)
 {
 	std::unique_ptr<CHttpRequest> pResult = HttpGet(pUrl, pConfig);
 	pResult->WriteToFile(pStorage, pOutputFile, StorageType);
@@ -271,7 +271,7 @@ inline std::unique_ptr<CHttpRequest> HttpGetFile(const char *pUrl, CConfiguratio
 	return pResult;
 }
 
-inline std::unique_ptr<CHttpRequest> HttpGetBoth(const char *pUrl, CConfiguration *pConfig, IStorage *pStorage, const char *pOutputFile, int StorageType)
+inline std::unique_ptr<CHttpRequest> HttpGetBoth(const char *pUrl, CConfiguration *pConfig, IStorageEngine *pStorage, const char *pOutputFile, int StorageType)
 {
 	std::unique_ptr<CHttpRequest> pResult = HttpGet(pUrl, pConfig);
 	pResult->WriteToFileAndMemory(pStorage, pOutputFile, StorageType);

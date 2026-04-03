@@ -504,7 +504,7 @@ void CHttpRequest::OnValidation(bool Success)
 	}
 }
 
-void CHttpRequest::WriteToFile(IStorage *pStorage, const char *pDest, int StorageType)
+void CHttpRequest::WriteToFile(IStorageEngine *pStorage, const char *pDest, int StorageType)
 {
 	m_WriteToMemory = false;
 	m_WriteToFile = true;
@@ -518,10 +518,10 @@ void CHttpRequest::WriteToFile(IStorage *pStorage, const char *pDest, int Storag
 	{
 		pStorage->GetCompletePath(StorageType, m_aDest, m_aDestAbsolute, sizeof(m_aDestAbsolute));
 	}
-	IStorage::FormatTmpPath(m_aDestAbsoluteTmp, sizeof(m_aDestAbsoluteTmp), m_aDestAbsolute);
+	IStorageEngine::FormatTmpPath(m_aDestAbsoluteTmp, sizeof(m_aDestAbsoluteTmp), m_aDestAbsolute);
 }
 
-void CHttpRequest::WriteToFileAndMemory(IStorage *pStorage, const char *pDest, int StorageType)
+void CHttpRequest::WriteToFileAndMemory(IStorageEngine *pStorage, const char *pDest, int StorageType)
 {
 	WriteToFile(pStorage, pDest, StorageType);
 	m_WriteToMemory = true;
@@ -595,7 +595,7 @@ bool CHttp::Init(std::chrono::milliseconds ShutdownDelay, CConfiguration *pConfi
 	// handlers and instead ignore SIGPIPE from OpenSSL ourselves.
 	signal(SIGPIPE, SIG_IGN);
 #endif
-	m_pThread = thread_init(CHttp::ThreadMain, this);
+	m_pThread = thread_init(CHttp::ThreadMain, this, "Http thread");
 
 	std::unique_lock Lock(m_Lock);
 	m_Cv.wait(Lock, [this]() { return m_State != CHttp::UNINITIALIZED; });
