@@ -1046,8 +1046,6 @@ void CGS::OnTick()
 	}
 
 	Mmo()->OnTick();
-
-	Server()->ExpireServerInfo();
 }
 
 // Here we use functions that can have static data or functions that don't need to be called in all worlds
