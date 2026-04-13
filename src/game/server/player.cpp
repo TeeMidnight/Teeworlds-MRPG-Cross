@@ -777,7 +777,7 @@ void CPlayer::FormatDialogText(int DataBotID, const char *pText) // TODO: perfor
 	str_copy(m_aFormatDialogText, GS()->Server()->Localization()->Localize(GetLanguage(), pText), sizeof(m_aFormatDialogText));
 
 	// arrays replacing dialogs
-	const char* pBot = str_find_nocase(m_aFormatDialogText, "[Bot_");
+	const char* pBot = str_find(m_aFormatDialogText, "[Bot_");
 	while(pBot != nullptr)
 	{
 		int SearchBotID = 0;
@@ -787,10 +787,10 @@ void CPlayer::FormatDialogText(int DataBotID, const char *pText) // TODO: perfor
 			str_format(aBufSearch, sizeof(aBufSearch), "[Bot_%d]", SearchBotID);
 			str_replace(m_aFormatDialogText, aBufSearch, DataBotInfo::ms_aDataBot[SearchBotID].m_aNameBot);
 		}
-		pBot = str_find_nocase(m_aFormatDialogText, "[Bot_");
+		pBot = str_find(m_aFormatDialogText, "[Bot_");
 	}
 
-	const char* pWorld = str_find_nocase(m_aFormatDialogText, "[World_");
+	const char* pWorld = str_find(m_aFormatDialogText, "[World_");
 	while(pWorld != nullptr)
 	{
 		int WorldID = 0;
@@ -800,7 +800,7 @@ void CPlayer::FormatDialogText(int DataBotID, const char *pText) // TODO: perfor
 			str_format(aBufSearch, sizeof(aBufSearch), "[World_%d]", WorldID);
 			str_replace(m_aFormatDialogText, aBufSearch, Server()->GetWorldName(WorldID));
 		}
-		pWorld = str_find_nocase(m_aFormatDialogText, "[World_");
+		pWorld = str_find(m_aFormatDialogText, "[World_");
 	}
 
 	// based replacing dialogs
