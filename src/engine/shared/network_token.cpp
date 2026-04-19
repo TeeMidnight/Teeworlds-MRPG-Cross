@@ -23,6 +23,11 @@ void CNetTokenManager::Init(CNetBase *pNetBase, int SeedTime)
 {
 	m_pNetBase = pNetBase;
 	m_SeedTime = SeedTime;
+	if(secure_random_init())
+	{
+		dbg_msg("mastersrv", "Failed to initialize secure RNG, which is required");
+		dbg_break();
+	}
 	GenerateSeed();
 }
 
